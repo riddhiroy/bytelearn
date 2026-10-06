@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {Animated, Dimensions, FlatList, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Animated, Dimensions, FlatList, PanResponder, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Ionicons} from '@expo/vector-icons';
 
@@ -54,9 +54,60 @@ function Quiz({scene}:{scene:Scene}){const [selected,setSelected]=useState<numbe
 
 function Card({lesson,saved,liked,onSave,onLike,onComplete}:{lesson:Lesson;saved:boolean;liked:boolean;onSave:()=>void;onLike:()=>void;onComplete:()=>void}){
  const [scene,setScene]=useState(0);
- useEffect(()=>{setScene(0);onComplete()},[lesson.id]);
- useEffect(()=>{if(scene<lesson.scenes.length-1){const t=setTimeout(()=>setScene(s=>s+1),5200);return()=>clearTimeout(t)}},[scene,lesson.scenes.length]);
- return <View style={styles.lesson}><View style={styles.orb}/><View style={styles.lessonTop}><Text style={styles.category}>{lesson.tag}</Text><Text style={styles.counter}>{scene+1}/{lesson.scenes.length}</Text></View><Scene scene={lesson.scenes[scene]} active/><View style={styles.side}><Pressable onPress={onLike}><Ionicons name={liked?'heart':'heart-outline'} size={29} color={liked?C.pink:C.text}/></Pressable><Pressable onPress={onSave}><Ionicons name={saved?'bookmark':'bookmark-outline'} size={29} color={C.text}/></Pressable><Ionicons name="share-outline" size={29} color={C.text}/></View><View style={styles.bottom}><Text style={styles.title}>{lesson.title}</Text><Text style={styles.subtitle}>{lesson.subtitle}</Text><View style={styles.progress}><View style={[styles.fill,{width:`${((scene+1)/lesson.scenes.length)*100}%`}]}/></View></View></View>
+ const completedRef=useRef(false);
+
+ useEffect(()=>{
+  setScene(0);
+  completedRef.current=false;
+ },[lesson.id]);
+
+ const goPrev=()=>{
+  setScene(s=>Math.max(0,s-1));
+ };
+
+ const goNext=()=>{
+  setScene(s=>{
+   const next=Math.min(lesson.scenes.length-1,s+1);
+   if(next===lesson.scenes.length-1 && !completedRef.current){
+    completedRef.current=true;
+    onComplete();
+   }
+   return next;
+  });
+ };
+
+ const panResponder=useRef(PanResponder.create({
+  onMoveShouldSetPanResponder:(_,g)=>Math.abs(g.dx)>18 && Math.abs(g.dx)>Math.abs(g.dy),
+  onPanResponderRelease:(_,g)=>{
+   if(g.dx < -40) goNext();
+   else if(g.dx > 40) goPrev();
+  }
+ })).current;
+
+ return <View style={styles.lesson} {...panResponder.panHandlers}>
+  <View style={styles.orb}/>
+  <View style={styles.lessonTop}>
+   <Text style={styles.category}>{lesson.tag}</Text>
+   <Text style={styles.counter}>{scene+1}/{lesson.scenes.length}</Text>
+  </View>
+  <Scene scene={lesson.scenes[scene]} active/>
+  <Pressable accessibilityLabel="Previous slide" onPress={goPrev} disabled={scene===0} style={[styles.slideArrow,styles.slideArrowLeft,scene===0&&styles.slideArrowDisabled]}>
+   <Ionicons name="chevron-back" size={24} color={C.text}/>
+  </Pressable>
+  <Pressable accessibilityLabel="Next slide" onPress={goNext} disabled={scene===lesson.scenes.length-1} style={[styles.slideArrow,styles.slideArrowRight,scene===lesson.scenes.length-1&&styles.slideArrowDisabled]}>
+   <Ionicons name="chevron-forward" size={24} color={C.text}/>
+  </Pressable>
+  <View style={styles.side}>
+   <Pressable onPress={onLike}><Ionicons name={liked?'heart':'heart-outline'} size={29} color={liked?C.pink:C.text}/></Pressable>
+   <Pressable onPress={onSave}><Ionicons name={saved?'bookmark':'bookmark-outline'} size={29} color={C.text}/></Pressable>
+   <Ionicons name="share-outline" size={29} color={C.text}/>
+  </View>
+  <View style={styles.bottom}>
+   <Text style={styles.title}>{lesson.title}</Text>
+   <Text style={styles.subtitle}>{lesson.subtitle}</Text>
+   <View style={styles.progress}><View style={[styles.fill,{width:`${((scene+1)/lesson.scenes.length)*100}%`}]}/></View>
+  </View>
+ </View>
 }
 
 export default function App(){
@@ -71,4 +122,4 @@ export default function App(){
 
 function Profile({name,completed,pro,setPro,interests,setInterests,logout}:{name:string;completed:number;pro:boolean;setPro:(x:boolean)=>void;interests:string[];setInterests:(x:string[])=>void;logout:()=>void}){return <View style={styles.profile}><Text style={styles.profileKicker}>YOUR LEARNING</Text><Text style={styles.profileName}>{name}</Text><View style={styles.stats}><View style={styles.stat}><Text style={styles.statN}>{completed}</Text><Text style={styles.statL}>Lessons</Text></View><View style={styles.stat}><Text style={styles.statN}>{completed*10}</Text><Text style={styles.statL}>XP</Text></View><View style={styles.stat}><Text style={styles.statN}>🔥</Text><Text style={styles.statL}>Keep going</Text></View></View><Text style={styles.section}>TOPICS</Text><View style={styles.chips}>{categories.map(c=><Pressable key={c} onPress={()=>setInterests(interests.includes(c)?interests.filter(x=>x!==c):[...interests,c])} style={[styles.chip,interests.includes(c)&&styles.chipOn]}><Text style={styles.chipText}>{c}</Text></Pressable>)}</View><Text style={styles.section}>BYTELEARN PRO</Text><View style={styles.proCard}><Text style={styles.proTitle}>{pro?'PRO ACTIVE':'Learn without limits'}</Text><Text style={styles.proBody}>No ads · advanced lessons · personalized paths · offline learning</Text><Pressable style={styles.proButton} onPress={()=>setPro(true)}><Text style={styles.primaryText}>{pro?'Subscribed':'₹599 / year'}</Text></Pressable></View><Pressable onPress={logout} style={styles.logout}><Text style={styles.logoutText}>Log out</Text></Pressable></View>}
 
-const styles=StyleSheet.create({app:{flex:1,backgroundColor:C.bg},auth:{flex:1,backgroundColor:C.bg,padding:28,justifyContent:'center'},logo:{fontSize:20,fontWeight:'900',letterSpacing:2,color:C.text},authTitle:{fontSize:42,lineHeight:48,fontWeight:'900',color:C.text,marginTop:55},authSub:{fontSize:17,lineHeight:25,color:C.muted,marginTop:18,marginBottom:22},input:{backgroundColor:C.card,borderRadius:14,padding:16,color:C.text,fontSize:16,borderWidth:1,borderColor:'#22242D'},primary:{backgroundColor:C.accent,borderRadius:14,padding:17,alignItems:'center',marginTop:12},primaryText:{color:'#fff',fontWeight:'800',fontSize:16},small:{color:'#666875',textAlign:'center',marginTop:18,lineHeight:19},header:{position:'absolute',zIndex:5,top:8,left:18,right:18,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},xp:{color:C.text,fontWeight:'700'},lesson:{height:H,width:W,paddingHorizontal:25,paddingTop:55,paddingBottom:95,overflow:'hidden'},orb:{position:'absolute',width:280,height:280,borderRadius:140,backgroundColor:'#17122B',right:-100,top:90},lessonTop:{flexDirection:'row',justifyContent:'space-between'},category:{color:C.cyan,fontSize:12,fontWeight:'900',letterSpacing:2},counter:{color:'#676975',fontWeight:'700'},eyebrow:{color:C.accent,fontWeight:'900',letterSpacing:2,fontSize:12,marginBottom:14},big:{fontSize:50,lineHeight:54,fontWeight:'900',color:C.text},h1:{fontSize:35,lineHeight:41,fontWeight:'900',color:C.text,marginBottom:18},body:{fontSize:20,lineHeight:30,color:'#D5D6DD'},flow:{backgroundColor:C.card,borderRadius:24,padding:22,borderWidth:1,borderColor:'#20222C'},flowItem:{color:C.text,fontSize:21,fontWeight:'800',paddingVertical:7},arrow:{color:C.accent,fontSize:20,textAlign:'center',paddingVertical:2},code:{backgroundColor:'#0D0E13',borderRadius:18,padding:20,borderWidth:1,borderColor:'#292B38'},codeText:{color:C.cyan,fontFamily:'monospace',fontSize:16,lineHeight:25},summary:{backgroundColor:'#17122B',borderRadius:24,padding:24,borderWidth:1,borderColor:'#30285B'},summaryText:{color:C.text,fontSize:23,lineHeight:32,fontWeight:'700'},option:{backgroundColor:C.card,borderRadius:15,padding:17,marginBottom:10,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:'#252732'},optionChosen:{borderColor:C.accent},optionCorrect:{borderColor:C.green},optionText:{color:C.text,fontSize:16,fontWeight:'600',flex:1},feedback:{fontWeight:'800',fontSize:16,marginTop:6},side:{position:'absolute',right:16,bottom:145,gap:22,alignItems:'center'},bottom:{position:'absolute',left:25,right:25,bottom:100},title:{fontSize:23,fontWeight:'900',color:C.text},subtitle:{fontSize:14,color:C.muted,marginTop:5},progress:{height:3,backgroundColor:'#292B34',marginTop:13,borderRadius:3},fill:{height:3,backgroundColor:C.accent,borderRadius:3},nav:{position:'absolute',bottom:0,left:0,right:0,height:78,backgroundColor:'#09090D',borderTopWidth:1,borderTopColor:'#1B1C23',flexDirection:'row',justifyContent:'space-around',paddingTop:10},navItem:{alignItems:'center',width:'25%'},navText:{fontSize:11,color:'#676975',marginTop:4,fontWeight:'700'},search:{position:'absolute',zIndex:6,top:44,left:18,right:18,backgroundColor:C.card,borderRadius:14,padding:13,color:C.text,borderWidth:1,borderColor:'#252732'},profile:{flex:1,padding:25,paddingTop:80},profileKicker:{color:C.muted,fontSize:14,textTransform:'uppercase',letterSpacing:2,fontWeight:'800'},profileName:{color:C.text,fontSize:36,fontWeight:'900',marginTop:5},stats:{flexDirection:'row',marginTop:25,gap:10},stat:{flex:1,backgroundColor:C.card,borderRadius:16,padding:16},statN:{color:C.text,fontSize:25,fontWeight:'900'},statL:{color:C.muted,fontSize:12,marginTop:4},section:{color:C.muted,fontSize:12,fontWeight:'900',letterSpacing:2,marginTop:28,marginBottom:10},chips:{flexDirection:'row',flexWrap:'wrap',gap:8},chip:{borderWidth:1,borderColor:'#2A2C37',borderRadius:20,paddingVertical:9,paddingHorizontal:13},chipOn:{backgroundColor:'#241D3D',borderColor:C.accent},chipText:{color:C.text,fontWeight:'700'},proCard:{backgroundColor:'#17122B',borderRadius:20,padding:20,borderWidth:1,borderColor:'#30285B'},proTitle:{color:C.text,fontSize:20,fontWeight:'900'},proBody:{color:C.muted,lineHeight:21,marginTop:8},proButton:{backgroundColor:C.accent,borderRadius:12,padding:13,alignItems:'center',marginTop:15},logout:{marginTop:20,alignItems:'center'},logoutText:{color:C.pink,fontWeight:'800'}});
+const styles=StyleSheet.create({app:{flex:1,backgroundColor:C.bg},auth:{flex:1,backgroundColor:C.bg,padding:28,justifyContent:'center'},logo:{fontSize:20,fontWeight:'900',letterSpacing:2,color:C.text},authTitle:{fontSize:42,lineHeight:48,fontWeight:'900',color:C.text,marginTop:55},authSub:{fontSize:17,lineHeight:25,color:C.muted,marginTop:18,marginBottom:22},input:{backgroundColor:C.card,borderRadius:14,padding:16,color:C.text,fontSize:16,borderWidth:1,borderColor:'#22242D'},primary:{backgroundColor:C.accent,borderRadius:14,padding:17,alignItems:'center',marginTop:12},primaryText:{color:'#fff',fontWeight:'800',fontSize:16},small:{color:'#666875',textAlign:'center',marginTop:18,lineHeight:19},header:{position:'absolute',zIndex:5,top:8,left:18,right:18,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},xp:{color:C.text,fontWeight:'700'},lesson:{height:H,width:W,paddingHorizontal:25,paddingTop:55,paddingBottom:95,overflow:'hidden'},orb:{position:'absolute',width:280,height:280,borderRadius:140,backgroundColor:'#17122B',right:-100,top:90},lessonTop:{flexDirection:'row',justifyContent:'space-between'},category:{color:C.cyan,fontSize:12,fontWeight:'900',letterSpacing:2},counter:{color:'#676975',fontWeight:'700'},eyebrow:{color:C.accent,fontWeight:'900',letterSpacing:2,fontSize:12,marginBottom:14},big:{fontSize:50,lineHeight:54,fontWeight:'900',color:C.text},h1:{fontSize:35,lineHeight:41,fontWeight:'900',color:C.text,marginBottom:18},body:{fontSize:20,lineHeight:30,color:'#D5D6DD'},flow:{backgroundColor:C.card,borderRadius:24,padding:22,borderWidth:1,borderColor:'#20222C'},flowItem:{color:C.text,fontSize:21,fontWeight:'800',paddingVertical:7},arrow:{color:C.accent,fontSize:20,textAlign:'center',paddingVertical:2},code:{backgroundColor:'#0D0E13',borderRadius:18,padding:20,borderWidth:1,borderColor:'#292B38'},codeText:{color:C.cyan,fontFamily:'monospace',fontSize:16,lineHeight:25},summary:{backgroundColor:'#17122B',borderRadius:24,padding:24,borderWidth:1,borderColor:'#30285B'},summaryText:{color:C.text,fontSize:23,lineHeight:32,fontWeight:'700'},option:{backgroundColor:C.card,borderRadius:15,padding:17,marginBottom:10,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:'#252732'},optionChosen:{borderColor:C.accent},optionCorrect:{borderColor:C.green},optionText:{color:C.text,fontSize:16,fontWeight:'600',flex:1},feedback:{fontWeight:'800',fontSize:16,marginTop:6},side:{position:'absolute',right:16,bottom:145,gap:22,alignItems:'center'},slideArrow:{position:'absolute',top:'50%',marginTop:-20,width:42,height:42,borderRadius:21,backgroundColor:'#181922',borderWidth:1,borderColor:'#2B2D38',alignItems:'center',justifyContent:'center',zIndex:4},slideArrowLeft:{left:14},slideArrowRight:{right:14},slideArrowDisabled:{opacity:0.25},bottom:{position:'absolute',left:25,right:25,bottom:100},title:{fontSize:23,fontWeight:'900',color:C.text},subtitle:{fontSize:14,color:C.muted,marginTop:5},progress:{height:3,backgroundColor:'#292B34',marginTop:13,borderRadius:3},fill:{height:3,backgroundColor:C.accent,borderRadius:3},nav:{position:'absolute',bottom:0,left:0,right:0,height:78,backgroundColor:'#09090D',borderTopWidth:1,borderTopColor:'#1B1C23',flexDirection:'row',justifyContent:'space-around',paddingTop:10},navItem:{alignItems:'center',width:'25%'},navText:{fontSize:11,color:'#676975',marginTop:4,fontWeight:'700'},search:{position:'absolute',zIndex:6,top:44,left:18,right:18,backgroundColor:C.card,borderRadius:14,padding:13,color:C.text,borderWidth:1,borderColor:'#252732'},profile:{flex:1,padding:25,paddingTop:80},profileKicker:{color:C.muted,fontSize:14,textTransform:'uppercase',letterSpacing:2,fontWeight:'800'},profileName:{color:C.text,fontSize:36,fontWeight:'900',marginTop:5},stats:{flexDirection:'row',marginTop:25,gap:10},stat:{flex:1,backgroundColor:C.card,borderRadius:16,padding:16},statN:{color:C.text,fontSize:25,fontWeight:'900'},statL:{color:C.muted,fontSize:12,marginTop:4},section:{color:C.muted,fontSize:12,fontWeight:'900',letterSpacing:2,marginTop:28,marginBottom:10},chips:{flexDirection:'row',flexWrap:'wrap',gap:8},chip:{borderWidth:1,borderColor:'#2A2C37',borderRadius:20,paddingVertical:9,paddingHorizontal:13},chipOn:{backgroundColor:'#241D3D',borderColor:C.accent},chipText:{color:C.text,fontWeight:'700'},proCard:{backgroundColor:'#17122B',borderRadius:20,padding:20,borderWidth:1,borderColor:'#30285B'},proTitle:{color:C.text,fontSize:20,fontWeight:'900'},proBody:{color:C.muted,lineHeight:21,marginTop:8},proButton:{backgroundColor:C.accent,borderRadius:12,padding:13,alignItems:'center',marginTop:15},logout:{marginTop:20,alignItems:'center'},logoutText:{color:C.pink,fontWeight:'800'}});
