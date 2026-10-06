@@ -2,20 +2,25 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+// EXPO_PUBLIC_* is preferred for local/prod configuration.
+// These fallback values match the ByteLearn Supabase project used by the
+// GitHub Pages build, so the app does not silently fall back to local data
+// when running directly with Expo.
+const url =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ??
+  'https://gekygmwrwdkfxrvkwgtl.supabase.co';
 
-export const hasSupabaseConfig = Boolean(
-  url && key && !url.includes('YOUR_PROJECT') && !key.includes('YOUR_PUBLISHABLE_KEY')
-);
+const key =
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  'sb_publishable_cEusXQPG0C_PzWQaa_PWrQ_lyvv1Sca';
 
-export const supabase = hasSupabaseConfig
-  ? createClient(url, key, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
-    })
-  : null;
+export const hasSupabaseConfig = Boolean(url && key);
+
+export const supabase = createClient(url, key, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
