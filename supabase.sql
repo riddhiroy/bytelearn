@@ -5,9 +5,13 @@ create table if not exists public.profiles (
   display_name text,
   interests text[] default '{}',
   level text default 'Beginner',
+  goal text default 'Grow at work',
+  daily_goal integer default 5,
   xp integer default 0,
   streak integer default 0,
   last_active date,
+  last_goal_date date,
+  onboarding_completed boolean default false,
   is_pro boolean default false,
   created_at timestamptz default now()
 );
@@ -33,8 +37,15 @@ create table if not exists public.user_lessons (
   saved boolean default false,
   progress integer default 0,
   completed_at timestamptz,
+  quiz_bonus_awarded boolean default false,
   primary key(user_id, lesson_id)
 );
+
+alter table public.profiles add column if not exists goal text default 'Grow at work';
+alter table public.profiles add column if not exists daily_goal integer default 5;
+alter table public.profiles add column if not exists last_goal_date date;
+alter table public.profiles add column if not exists onboarding_completed boolean default false;
+alter table public.user_lessons add column if not exists quiz_bonus_awarded boolean default false;
 
 alter table public.profiles enable row level security;
 alter table public.lessons enable row level security;
