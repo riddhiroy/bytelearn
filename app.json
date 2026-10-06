@@ -9,7 +9,7 @@
       "package": "com.bytelearn.app"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": null
     },
     "experiments": {
