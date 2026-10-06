@@ -33,6 +33,9 @@ jobs:
         run: npm install
 
       - name: Export web app
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://gekygmwrwdkfxrvkwgtl.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_cEusXQPG0C_PzWQaa_PWrQ_lyvv1Sca
         run: npm run web:build
 
       - name: Configure Pages
