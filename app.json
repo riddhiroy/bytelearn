@@ -11,6 +11,9 @@
     "web": {
       "output": "static",
       "favicon": null
+    },
+    "experiments": {
+      "baseUrl": "/bytelearn"
     }
   }
 }
