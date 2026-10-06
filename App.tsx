@@ -55,21 +55,21 @@ function Quiz({scene}:{scene:Scene}){const [selected,setSelected]=useState<numbe
 
 function Card({lesson,saved,liked,onSave,onLike,onComplete}:{lesson:Lesson;saved:boolean;liked:boolean;onSave:()=>void;onLike:()=>void;onComplete:()=>void}){
  const [scene,setScene]=useState(0); const [paused,setPaused]=useState(false); const [heartBurst,setHeartBurst]=useState(false);
- const completedRef=useRef(false); const lastTapRef=useRef(0); const longPressRef=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const completedRef=useRef(false); const lastTapRef=useRef(0); const touchStartRef=useRef(0); const touchMovedRef=useRef(false);
  useEffect(()=>{setScene(0);setPaused(false);completedRef.current=false},[lesson.id]);
  const goPrev=()=>setScene(s=>Math.max(0,s-1));
  const goNext=()=>setScene(s=>{const next=Math.min(lesson.scenes.length-1,s+1);if(next===lesson.scenes.length-1&&!completedRef.current){completedRef.current=true;onComplete()}return next});
  const handleTap=()=>{const now=Date.now();if(now-lastTapRef.current<320){lastTapRef.current=0;onLike();setHeartBurst(true);setTimeout(()=>setHeartBurst(false),650)}else lastTapRef.current=now};
  const panResponder=useRef(PanResponder.create({
-  onStartShouldSetPanResponder:()=>true,
+  onStartShouldSetPanResponder:()=>false,
   onMoveShouldSetPanResponder:(_,g)=>Math.abs(g.dx)>18||Math.abs(g.dy)>18,
-  onPanResponderGrant:()=>{longPressRef.current=setTimeout(()=>setPaused(true),450)},
-  onPanResponderMove:(_,g)=>{if(Math.abs(g.dx)>18||Math.abs(g.dy)>18){if(longPressRef.current)clearTimeout(longPressRef.current);longPressRef.current=null}},
-  onPanResponderRelease:(_,g)=>{if(longPressRef.current)clearTimeout(longPressRef.current);longPressRef.current=null;if(Math.abs(g.dx)<18&&Math.abs(g.dy)<18){if(paused)setPaused(false);else handleTap()}else if(g.dx<-40)goNext();else if(g.dx>40)goPrev()},
-  onPanResponderTerminate:()=>{if(longPressRef.current)clearTimeout(longPressRef.current);longPressRef.current=null}
+  onPanResponderRelease:(_,g)=>{if(g.dx<-40)goNext();else if(g.dx>40)goPrev()}
  })).current;
+ const onTouchStart=()=>{touchStartRef.current=Date.now();touchMovedRef.current=false};
+ const onTouchMove=()=>{touchMovedRef.current=true};
+ const onTouchEnd=()=>{const duration=Date.now()-touchStartRef.current;if(touchMovedRef.current)return;if(duration>=450){setPaused(true);return}if(paused){setPaused(false);return}handleTap()};
  const shareLesson=async()=>{try{await Share.share({message:lesson.title+' — '+lesson.subtitle+'\nLearn it on ByteLearn.'})}catch{}};
- return <View style={styles.lesson} {...panResponder.panHandlers}>
+ return <View style={styles.lesson} {...panResponder.panHandlers} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
   <View style={styles.orb}/><View style={styles.lessonTop}><Text style={styles.category}>{lesson.tag}</Text><Text style={styles.counter}>{scene+1}/{lesson.scenes.length}</Text></View>
   <Scene scene={lesson.scenes[scene]} active={!paused}/>
   {heartBurst&&<View pointerEvents="none" style={styles.heartBurst}><Ionicons name="heart" size={92} color={C.pink}/></View>}
