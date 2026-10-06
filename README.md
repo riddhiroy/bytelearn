@@ -1,24 +1,8 @@
 # ByteLearn
 
-**Reels-style micro-learning for AI and technology.**
-
-ByteLearn turns technical concepts into short, animated, swipeable lessons.
-
-## MVP
-
-- Vertical Reels-style learning feed
-- Animated scenes instead of prerecorded videos
-- AI, programming, cloud and system-design lessons
-- Interactive quizzes and XP
-- Likes and saved lessons
-- Search and topic exploration
-- Daily streaks
-- Local persistence for the prototype
-- Premium/paywall-ready profile
+ByteLearn is a Reels-style micro-learning app for AI and technology.
 
 ## Run
-
-Requires Node.js 20+.
 
 ```bash
 npm install
@@ -27,13 +11,22 @@ npx expo start
 
 Scan the QR code with Expo Go.
 
+## MVP
+
+- Vertical swipe learning feed
+- Animated text, flows and code scenes
+- AI, programming, cloud and system design lessons
+- Interactive quizzes
+- Likes and saves
+- Search
+- Topic personalization
+- XP and local progress
+- Pro-ready profile
+
 ## Production roadmap
 
-1. Supabase Auth + database
-2. Remote lesson CMS
-3. Analytics
-4. AdMob for free users
-5. Google Play Billing for ByteLearn Pro
-6. EAS Android builds and Play Store release
+Supabase schema is included in `supabase.sql`. Production authentication, remote lesson management, analytics, AdMob and Google Play Billing should be added after the retention loop is validated.
 
-The repository is intentionally free of secrets. Copy `.env.example` to your local environment and add your own credentials.
+## Node
+
+Use Node.js 20 LTS or newer.
