@@ -53,7 +53,7 @@ alter table public.user_lessons enable row level security;
 
 -- Explicit Data API privileges. Lessons are public to authenticated users;
 -- user data is restricted to the current auth.uid().
-grant select on public.lessons to authenticated;
+grant select on public.lessons to anon, authenticated;
 grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update, delete on public.user_lessons to authenticated;
 
@@ -64,7 +64,7 @@ drop policy if exists "own profile update" on public.profiles;
 drop policy if exists "own lesson progress" on public.user_lessons;
 
 create policy "published lessons readable" on public.lessons
-  for select to authenticated using (published = true);
+  for select to anon, authenticated using (published = true);
 
 create policy "own profile read" on public.profiles
   for select to authenticated using ((select auth.uid()) = id);
