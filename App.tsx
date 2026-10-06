@@ -111,7 +111,7 @@ export default function App(){
  const [interests,setInterests]=useState<string[]>(['AI','Programming']),[skillLevel,setSkillLevel]=useState('Beginner'),[goal,setGoal]=useState('Grow at work'),[dailyGoal,setDailyGoal]=useState(5),[onboardingDone,setOnboardingDone]=useState(false),[onboardingStep,setOnboardingStep]=useState(0);
  const [completed,setCompleted]=useState<string[]>([]),[quizBonusAwarded,setQuizBonusAwarded]=useState<string[]>([]),[saved,setSaved]=useState<string[]>([]),[liked,setLiked]=useState<string[]>([]);
  const [xp,setXp]=useState(0),[streak,setStreak]=useState(0),[dailyCompleted,setDailyCompleted]=useState(0),[dailyProgressDate,setDailyProgressDate]=useState(localDateKey()),[lastGoalDate,setLastGoalDate]=useState<string|null>(null);
- const [query,setQuery]=useState(''),[pro,setPro]=useState(false),[lessonFeed,setLessonFeed]=useState<Lesson[]>(lessons.map(enrichLesson)),[userId,setUserId]=useState<string|null>(null),[backendReady,setBackendReady]=useState(false),[hydrated,setHydrated]=useState(false),[showGeneralizedNotice,setShowGeneralizedNotice]=useState(false);
+ const [query,setQuery]=useState(''),[pro,setPro]=useState(false),[lessonFeed,setLessonFeed]=useState<Lesson[]>([]),[userId,setUserId]=useState<string|null>(null),[backendReady,setBackendReady]=useState(false),[hydrated,setHydrated]=useState(false),[showGeneralizedNotice,setShowGeneralizedNotice]=useState(false),[dbStatus,setDbStatus]=useState<'connecting'|'connected'|'error'>('connecting'),[dbError,setDbError]=useState('');
 
  useEffect(()=>{if(Platform.OS==='web'&&typeof document!=='undefined'){const html=document.documentElement,body=document.body;const prevHtml=html.style.overscrollBehaviorY,prevBody=body.style.overscrollBehaviorY;html.style.overscrollBehaviorY='none';body.style.overscrollBehaviorY='none';html.style.overflow='hidden';body.style.overflow='hidden';return()=>{html.style.overscrollBehaviorY=prevHtml;body.style.overscrollBehaviorY=prevBody;html.style.overflow='';body.style.overflow=''}}},[]);
  useEffect(()=>{setFeedIndex(0);feedOffset.setValue(0);setShowGeneralizedNotice(false)},[screen,feedMode,query,interests,skillLevel,goal]);
@@ -119,74 +119,103 @@ export default function App(){
  useEffect(()=>{if(!hydrated)return;AsyncStorage.setItem('bytelearn_state',JSON.stringify({logged,name,interests,skillLevel,goal,dailyGoal,onboardingDone,completed,quizBonusAwarded,saved,liked,pro,xp,streak,dailyProgressDate,dailyCompleted,lastGoalDate}))},[hydrated,logged,name,interests,skillLevel,goal,dailyGoal,onboardingDone,completed,quizBonusAwarded,saved,liked,pro,xp,streak,dailyProgressDate,dailyCompleted,lastGoalDate]);
 
  useEffect(()=>{
-  if(!hasSupabaseConfig||!supabase)return;
-  let mounted=true;
-  (async()=>{
-    // Load the public lesson catalog independently of authentication.
-    // This keeps the learning feed working even if anonymous auth is not enabled yet.
+  if(!hasSupabaseConfig||!supabase){
+    setDbStatus('error');
+    setDbError('Supabase client is not configured. Check the public Supabase URL and publishable key.');
+    return;
+  }
+
+  let cancelled=false;
+
+  const loadDatabase=async()=>{
+    setDbStatus('connecting');
+    setDbError('');
+
     try{
-      const lessonRes=await supabase.from('lessons').select('id,category,title,subtitle,tag,difficulty,scenes').eq('published',true).order('created_at',{ascending:false});
-      if(lessonRes.error) throw lessonRes.error;
-      if(mounted){
-        setLessonFeed((lessonRes.data||[]).map((l:any)=>enrichLesson({...l,scenes:l.scenes as Scene[]})));
-        setBackendReady(true);
+      const lessonRes=await supabase
+        .from('lessons')
+        .select('id,category,title,subtitle,tag,difficulty,scenes,created_at')
+        .eq('published',true)
+        .order('created_at',{ascending:false});
+
+      if(lessonRes.error)throw lessonRes.error;
+
+      const rows=lessonRes.data||[];
+      if(rows.length===0){
+        throw new Error('Supabase is reachable, but public.lessons returned 0 published lessons.');
       }
-    }catch(e){
-      console.warn('Supabase lesson catalog failed; using local lessons.',e);
+
+      if(cancelled)return;
+
+      setLessonFeed(rows.map((l:any)=>enrichLesson({...l,scenes:l.scenes as Scene[]})));
+      setBackendReady(true);
+      setDbStatus('connected');
+
+      // User state is best-effort and must never replace the lesson catalog.
+      try{
+        const sessionResult=await supabase.auth.getSession();
+        let session=sessionResult.data.session;
+
+        if(!session){
+          const auth=await supabase.auth.signInAnonymously();
+          if(auth.error)throw auth.error;
+          session=auth.data.session;
+        }
+
+        if(!session?.user||cancelled)return;
+
+        const uid=session.user.id;
+        setUserId(uid);
+
+        const [profileRes,interactionRes]=await Promise.all([
+          supabase.from('profiles').select('display_name,interests,level,goal,daily_goal,xp,streak,last_goal_date,is_pro,onboarding_completed').eq('id',uid).maybeSingle(),
+          supabase.from('user_lessons').select('lesson_id,completed,liked,saved,completed_at,quiz_bonus_awarded').eq('user_id',uid)
+        ]);
+
+        if(profileRes.error)throw profileRes.error;
+        if(interactionRes.error)throw interactionRes.error;
+
+        if(profileRes.data){
+          setName(profileRes.data.display_name||'');
+          setInterests(profileRes.data.interests?.length?profileRes.data.interests:['AI','Programming']);
+          setSkillLevel(profileRes.data.level||'Beginner');
+          setGoal(profileRes.data.goal||'Grow at work');
+          setDailyGoal(profileRes.data.daily_goal||5);
+          setXp(profileRes.data.xp||0);
+          setStreak(profileRes.data.streak||0);
+          setLastGoalDate(profileRes.data.last_goal_date||null);
+          setPro(!!profileRes.data.is_pro);
+          setOnboardingDone(!!profileRes.data.onboarding_completed);
+          setLogged(true);
+        }else{
+          setLogged(true);
+        }
+
+        if(interactionRes.data){
+          const today=localDateKey();
+          setCompleted(interactionRes.data.filter((x:any)=>x.completed).map((x:any)=>x.lesson_id));
+          setSaved(interactionRes.data.filter((x:any)=>x.saved).map((x:any)=>x.lesson_id));
+          setLiked(interactionRes.data.filter((x:any)=>x.liked).map((x:any)=>x.lesson_id));
+          setQuizBonusAwarded(interactionRes.data.filter((x:any)=>x.quiz_bonus_awarded).map((x:any)=>x.lesson_id));
+          setDailyProgressDate(today);
+          setDailyCompleted(interactionRes.data.filter((x:any)=>x.completed&&x.completed_at&&localDateKey(new Date(x.completed_at))===today).length);
+        }
+      }catch(authError){
+        console.warn('Supabase user-state bootstrap failed; continuing with database lessons:',authError);
+      }
+    }catch(e:any){
+      if(cancelled)return;
+      const message=e?.message||String(e)||'Unknown Supabase error';
+      const details=[e?.code,e?.details,e?.hint].filter(Boolean).join(' · ');
+      setDbStatus('error');
+      setDbError(details?message+' · '+details:message);
+      console.warn('Supabase lesson catalog failed:',e);
     }
+  };
 
-    // User state is best-effort. Anonymous sign-in is required for progress, likes and saves.
-    try{
-      const sessionResult=await supabase.auth.getSession();
-      let session=sessionResult.data.session;
-      if(!session){
-        const auth=await supabase.auth.signInAnonymously();
-        if(auth.error) throw auth.error;
-        session=auth.data.session;
-      }
-      if(!session?.user||!mounted)return;
-      const uid=session.user.id;
-      setUserId(uid);
-
-      const [profileRes,interactionRes]=await Promise.all([
-        supabase.from('profiles').select('display_name,interests,level,goal,daily_goal,xp,streak,last_goal_date,is_pro,onboarding_completed').eq('id',uid).maybeSingle(),
-        supabase.from('user_lessons').select('lesson_id,completed,liked,saved,completed_at,quiz_bonus_awarded').eq('user_id',uid)
-      ]);
-
-      if(profileRes.error) throw profileRes.error;
-      if(interactionRes.error) throw interactionRes.error;
-
-      if(profileRes.data){
-        setName(profileRes.data.display_name||'');
-        setInterests(profileRes.data.interests?.length?profileRes.data.interests:['AI','Programming']);
-        setSkillLevel(profileRes.data.level||'Beginner');
-        setGoal(profileRes.data.goal||'Grow at work');
-        setDailyGoal(profileRes.data.daily_goal||5);
-        setXp(profileRes.data.xp||0);
-        setStreak(profileRes.data.streak||0);
-        setLastGoalDate(profileRes.data.last_goal_date||null);
-        setPro(!!profileRes.data.is_pro);
-        setOnboardingDone(!!profileRes.data.onboarding_completed);
-        setLogged(true);
-      }else{
-        setLogged(true);
-      }
-
-      if(interactionRes.data){
-        const today=localDateKey();
-        setCompleted(interactionRes.data.filter((x:any)=>x.completed).map((x:any)=>x.lesson_id));
-        setSaved(interactionRes.data.filter((x:any)=>x.saved).map((x:any)=>x.lesson_id));
-        setLiked(interactionRes.data.filter((x:any)=>x.liked).map((x:any)=>x.lesson_id));
-        setQuizBonusAwarded(interactionRes.data.filter((x:any)=>x.quiz_bonus_awarded).map((x:any)=>x.lesson_id));
-        setDailyProgressDate(today);
-        setDailyCompleted(interactionRes.data.filter((x:any)=>x.completed&&x.completed_at&&localDateKey(new Date(x.completed_at))===today).length);
-      }
-    }catch(e){
-      console.warn('Supabase auth bootstrap failed; using local user state.',e);
-    }
-  })();
-  return()=>{mounted=false};
- },[]);
+  loadDatabase();
+  return()=>{cancelled=true};
+ },[dbStatus]);
  const persistProfile=async(nextName=name,nextInterests=interests,nextPro=pro,nextOnboarding=onboardingDone)=>{
   if(!supabase||!userId)return;
   await supabase.from('profiles').upsert({id:userId,display_name:nextName,interests:nextInterests,level:skillLevel,goal,daily_goal:dailyGoal,xp,streak,last_goal_date:lastGoalDate,is_pro:nextPro,onboarding_completed:nextOnboarding});
@@ -217,6 +246,26 @@ export default function App(){
 
  const feedPanResponder=PanResponder.create({onStartShouldSetPanResponder:()=>false,onMoveShouldSetPanResponder:(_,g)=>Math.abs(g.dy)>24&&Math.abs(g.dy)>Math.abs(g.dx),onPanResponderMove:(_,g)=>{const limit=feedIndex===0&&g.dy>0?0:feedIndex===data.length-1&&g.dy<0?0:g.dy;feedOffset.setValue(limit)},onPanResponderRelease:(_,g)=>{const threshold=60,direction=g.dy<-threshold?1:g.dy>threshold?-1:0,next=Math.max(0,Math.min(data.length-1,feedIndex+direction));Animated.timing(feedOffset,{toValue:direction===1?-feedHeight:direction===-1?feedHeight:0,duration:180,useNativeDriver:true}).start(()=>{if(next!==feedIndex)setFeedIndex(next);feedOffset.setValue(0)})}});
 
+ if(dbStatus!=='connected'){
+  return <SafeAreaView style={styles.dbScreen}>
+    <StatusBar barStyle="light-content"/>
+    <Logo/>
+    <View style={styles.dbCard}>
+      <Ionicons name={dbStatus==='connecting'?'cloud-upload-outline':'cloud-offline-outline'} size={46} color={dbStatus==='connecting'?C.cyan:C.pink}/>
+      <Text style={styles.dbTitle}>{dbStatus==='connecting'?'Connecting to ByteLearn…':'Database not connected'}</Text>
+      <Text style={styles.dbBody}>{dbStatus==='connecting'?'ByteLearn is checking Supabase and loading the lesson catalog.':'ByteLearn could not load lessons from Supabase. Local lessons are disabled, so the app cannot silently hide a database failure.'}</Text>
+      {dbStatus==='error'&&<View style={styles.dbErrorBox}>
+        <Text style={styles.dbErrorLabel}>SUPABASE ERROR</Text>
+        <Text style={styles.dbErrorText}>{dbError}</Text>
+      </View>}
+      {dbStatus==='error'&&<Pressable style={styles.primary} onPress={()=>setDbStatus('connecting')}>
+        <Text style={styles.primaryText}>Retry connection</Text>
+      </Pressable>}
+      <Text style={styles.dbHint}>Database: gekygmwrwdkfxrvkwgtl.supabase.co</Text>
+    </View>
+  </SafeAreaView>;
+ }
+
  if(!logged||!onboardingDone){
   const onboardingTitles=['What do you want to learn?','What is your level?','What is your goal?','Set your daily learning goal'];
   return <SafeAreaView style={styles.onboard}><StatusBar barStyle="light-content"/><Logo/><View style={styles.onboardTop}><Text style={styles.onboardStep}>STEP {onboardingStep+1} OF 4</Text><View style={styles.onboardProgress}><View style={[styles.onboardProgressFill,{width:((onboardingStep+1)/4)*100+'%'}]}/></View></View><Text style={styles.authTitle}>{onboardingTitles[onboardingStep]}</Text>{onboardingStep===0&&<><Text style={styles.authSub}>Pick the topics you want ByteLearn to prioritize.</Text><View style={styles.choiceGrid}>{categories.map(c=><Pressable key={c} onPress={()=>setInterests(interests.includes(c)?interests.filter(x=>x!==c):[...interests,c])} style={[styles.choice,interests.includes(c)&&styles.choiceOn]}><Ionicons name={c==='AI'?'sparkles':c==='Programming'?'code-slash':c==='Cloud'?'cloud-outline':'git-network-outline'} size={24} color={interests.includes(c)?C.accent:C.text}/><Text style={styles.choiceText}>{c}</Text></Pressable>)}</View></>}{onboardingStep===1&&<><Text style={styles.authSub}>ByteLearn will tune explanations and recommendations to your level.</Text><View style={styles.choiceList}>{['Beginner','Intermediate','Advanced'].map(x=><Pressable key={x} onPress={()=>setSkillLevel(x)} style={[styles.choiceWide,skillLevel===x&&styles.choiceOn]}><Text style={styles.choiceTitle}>{x}</Text><Text style={styles.choiceHint}>{x==='Beginner'?'New to the topic':x==='Intermediate'?'Comfortable with the basics':'Ready for deeper tradeoffs and system thinking'}</Text></Pressable>)}</View></>}{onboardingStep===2&&<><Text style={styles.authSub}>Your goal helps ByteLearn choose what to show first.</Text><View style={styles.choiceList}>{['Grow at work','Interview preparation','College learning','Explore tech','Build projects'].map(x=><Pressable key={x} onPress={()=>setGoal(x)} style={[styles.choiceWide,goal===x&&styles.choiceOn]}><Text style={styles.choiceTitle}>{x}</Text></Pressable>)}</View></>}{onboardingStep===3&&<><Text style={styles.authSub}>Default: 5 lessons per day. You can change this anytime.</Text><View style={styles.choiceGrid}>{[3,5,10,15].map(n=><Pressable key={n} onPress={()=>setDailyGoal(n)} style={[styles.choice, dailyGoal===n&&styles.choiceOn]}><Ionicons name="flash" size={22} color={dailyGoal===n?C.yellow:C.text}/><Text style={styles.choiceText}>{n} lessons</Text></Pressable>)}</View><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor="#666875" style={styles.input}/></>}{<View style={styles.onboardActions}>{onboardingStep>0&&<Pressable style={styles.secondary} onPress={()=>setOnboardingStep(s=>s-1)}><Text style={styles.secondaryText}>Back</Text></Pressable>}<Pressable style={[styles.primary,{flex:1}]} disabled={(onboardingStep===0&&interests.length===0)||(onboardingStep===3&&!name.trim())} onPress={()=>onboardingStep===3?finishOnboarding():setOnboardingStep(s=>s+1)}><Text style={styles.primaryText}>{onboardingStep===3?'Start learning →':'Continue →'}</Text></Pressable></View>}</SafeAreaView>
@@ -225,4 +274,4 @@ export default function App(){
 }
 
 function Profile({name,completed,pro,setPro,interests,setInterests,logout,xp,xpLevel,levelTitle,xpIntoLevel,streak,dailyGoal,dailyCompleted,setDailyGoal,goal,skillLevel}:{name:string;completed:number;pro:boolean;setPro:(x:boolean)=>void;interests:string[];setInterests:(x:string[])=>void;logout:()=>void;xp:number;xpLevel:number;levelTitle:string;xpIntoLevel:number;streak:number;dailyGoal:number;dailyCompleted:number;setDailyGoal:(n:number)=>void;goal:string;skillLevel:string}){return <View style={styles.profile}><Text style={styles.profileKicker}>YOUR LEARNING</Text><Text style={styles.profileName}>{name}</Text><Text style={styles.profileMeta}>{levelTitle} · Level {xpLevel} · {skillLevel}</Text><View style={styles.levelCard}><View style={styles.levelRow}><Text style={styles.levelLabel}>LEVEL {xpLevel}</Text><Text style={styles.levelXp}>{xpIntoLevel}/100 XP</Text></View><View style={styles.levelBar}><View style={[styles.levelFill,{width:xpIntoLevel+'%'}]}/></View></View><View style={styles.stats}><View style={styles.stat}><Text style={styles.statN}>{completed}</Text><Text style={styles.statL}>Lessons</Text></View><View style={styles.stat}><Text style={styles.statN}>{xp}</Text><Text style={styles.statL}>XP</Text></View><View style={styles.stat}><Text style={styles.statN}>🔥 {streak}</Text><Text style={styles.statL}>Day streak</Text></View></View><Text style={styles.section}>TODAY</Text><View style={styles.dailyCard}><View><Text style={styles.dailyTitle}>{dailyCompleted}/{dailyGoal} lessons</Text><Text style={styles.dailyBody}>Complete your goal to keep the streak going.</Text></View><Ionicons name={dailyCompleted>=dailyGoal?'checkmark-circle':'flame'} size={28} color={dailyCompleted>=dailyGoal?C.green:C.yellow}/></View><Text style={styles.section}>DAILY GOAL</Text><View style={styles.chips}>{[3,5,10,15].map(n=><Pressable key={n} onPress={()=>setDailyGoal(n)} style={[styles.chip,dailyGoal===n&&styles.chipOn]}><Text style={styles.chipText}>{n} lessons</Text></Pressable>)}</View><Text style={styles.section}>YOUR GOAL</Text><Text style={styles.profileGoal}>{goal}</Text><Text style={styles.section}>TOPICS</Text><View style={styles.chips}>{categories.map(c=><Pressable key={c} onPress={()=>setInterests(interests.includes(c)?interests.filter(x=>x!==c):[...interests,c])} style={[styles.chip,interests.includes(c)&&styles.chipOn]}><Text style={styles.chipText}>{c}</Text></Pressable>)}</View><Text style={styles.section}>BYTELEARN PRO</Text><View style={styles.proCard}><Text style={styles.proTitle}>{pro?'PRO ACTIVE':'Learn without limits'}</Text><Text style={styles.proBody}>No ads · advanced lessons · personalized paths · offline learning</Text><Pressable style={styles.proButton} onPress={()=>setPro(true)}><Text style={styles.primaryText}>{pro?'Subscribed':'₹599 / year'}</Text></Pressable></View><Pressable onPress={logout} style={styles.logout}><Text style={styles.logoutText}>Log out</Text></Pressable></View>}
-const styles=StyleSheet.create({app:{flex:1,backgroundColor:C.bg},auth:{flex:1,backgroundColor:C.bg,padding:28,justifyContent:'center'},logo:{fontSize:20,fontWeight:'900',letterSpacing:2,color:C.text},authTitle:{fontSize:42,lineHeight:48,fontWeight:'900',color:C.text,marginTop:55},authSub:{fontSize:17,lineHeight:25,color:C.muted,marginTop:18,marginBottom:22},input:{backgroundColor:C.card,borderRadius:14,padding:16,color:C.text,fontSize:16,borderWidth:1,borderColor:'#22242D'},primary:{backgroundColor:C.accent,borderRadius:14,padding:17,alignItems:'center',marginTop:12},primaryText:{color:'#fff',fontWeight:'800',fontSize:16},small:{color:'#666875',textAlign:'center',marginTop:18,lineHeight:19},onboard:{flex:1,backgroundColor:C.bg,padding:28,paddingTop:46},onboardTop:{marginTop:30},onboardStep:{color:C.muted,fontSize:11,fontWeight:'900',letterSpacing:2},onboardProgress:{height:4,backgroundColor:'#22232C',borderRadius:4,marginTop:9},onboardProgressFill:{height:4,backgroundColor:C.accent,borderRadius:4},choiceGrid:{flexDirection:'row',flexWrap:'wrap',gap:10,marginTop:16},choice:{width:'48%',backgroundColor:C.card,borderRadius:18,padding:18,minHeight:86,borderWidth:1,borderColor:'#252732',alignItems:'center',justifyContent:'center',gap:8},choiceOn:{borderColor:C.accent,backgroundColor:'#211A38'},choiceText:{color:C.text,fontWeight:'800',fontSize:15,textAlign:'center'},choiceList:{marginTop:12,gap:10},choiceWide:{backgroundColor:C.card,borderRadius:16,padding:17,borderWidth:1,borderColor:'#252732'},choiceTitle:{color:C.text,fontSize:17,fontWeight:'800'},choiceHint:{color:C.muted,fontSize:13,marginTop:4,lineHeight:18},onboardActions:{flexDirection:'row',gap:10,marginTop:'auto',paddingTop:24},secondary:{borderWidth:1,borderColor:'#2A2C37',borderRadius:14,padding:17,alignItems:'center',justifyContent:'center'},secondaryText:{color:C.text,fontWeight:'800'},header:{position:'absolute',zIndex:5,top:8,left:18,right:18,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:4},feedTabs:{position:'absolute',left:0,right:0,flexDirection:'row',justifyContent:'center',gap:18},feedTabActive:{color:C.text,fontWeight:'900',fontSize:14},feedTab:{color:'#666875',fontWeight:'700',fontSize:14},xp:{flexDirection:'row',alignItems:'center',backgroundColor:'#12131A',paddingHorizontal:10,paddingVertical:6,borderRadius:16},xpText:{color:C.text,fontWeight:'800',marginLeft:4},generalNotice:{position:'absolute',top:82,left:28,right:28,zIndex:20,backgroundColor:'#17122BEE',borderRadius:14,borderWidth:1,borderColor:'#30285B',padding:12,flexDirection:'row',alignItems:'center',gap:8},generalNoticeText:{color:C.text,fontSize:13,fontWeight:'700',flex:1},feedViewport:{flex:1,overflow:'hidden',overscrollBehavior:'none',touchAction:'none'},pagerCard:{width:'100%'},lesson:{width:W,paddingHorizontal:25,paddingTop:55,paddingBottom:95,overflow:'hidden'},orb:{position:'absolute',width:280,height:280,borderRadius:140,backgroundColor:'#17122B',right:-100,top:90},lessonTop:{flexDirection:'row',justifyContent:'space-between'},category:{color:C.cyan,fontSize:12,fontWeight:'900',letterSpacing:2},counter:{color:'#676975',fontWeight:'700'},eyebrow:{color:C.accent,fontWeight:'900',letterSpacing:2,fontSize:12,marginBottom:14},big:{fontSize:50,lineHeight:54,fontWeight:'900',color:C.text},h1:{fontSize:35,lineHeight:41,fontWeight:'900',color:C.text,marginBottom:18},body:{fontSize:20,lineHeight:30,color:'#D5D6DD'},flow:{backgroundColor:C.card,borderRadius:24,padding:22,borderWidth:1,borderColor:'#20222C'},flowItem:{color:C.text,fontSize:21,fontWeight:'800',paddingVertical:7},arrow:{color:C.accent,fontSize:20,textAlign:'center',paddingVertical:2},code:{backgroundColor:'#0D0E13',borderRadius:18,padding:20,borderWidth:1,borderColor:'#292B38'},codeText:{color:C.cyan,fontFamily:'monospace',fontSize:16,lineHeight:25},summary:{backgroundColor:'#17122B',borderRadius:24,padding:24,borderWidth:1,borderColor:'#30285B'},callout:{backgroundColor:'#101A20',borderRadius:24,padding:22,borderWidth:1,borderColor:'#24424A'},calloutKicker:{color:C.cyan,fontSize:11,fontWeight:'900',letterSpacing:2,marginBottom:10},calloutTitle:{color:C.text,fontSize:27,lineHeight:32,fontWeight:'900',marginBottom:10},calloutBody:{color:'#D5D6DD',fontSize:17,lineHeight:25},summaryText:{color:C.text,fontSize:23,lineHeight:32,fontWeight:'700'},option:{backgroundColor:C.card,borderRadius:15,padding:17,marginBottom:10,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:'#252732'},optionChosen:{borderColor:C.accent},optionCorrect:{borderColor:C.green},optionText:{color:C.text,fontSize:16,fontWeight:'600',flex:1},feedback:{fontWeight:'800',fontSize:16,marginTop:6},side:{position:'absolute',right:12,bottom:138,gap:18,alignItems:'center'},actionButton:{alignItems:'center',minWidth:48},actionLabel:{color:C.text,fontSize:10,fontWeight:'700',marginTop:3},heartBurst:{position:'absolute',left:0,right:0,top:0,bottom:0,alignItems:'center',justifyContent:'center',zIndex:8},paused:{position:'absolute',top:'48%',left:'50%',marginLeft:-50,marginTop:-20,backgroundColor:'#181922DD',borderRadius:24,paddingHorizontal:16,paddingVertical:10,flexDirection:'row',alignItems:'center',gap:7,zIndex:7},pausedText:{color:C.text,fontWeight:'800'},slideArrow:{position:'absolute',top:'50%',marginTop:-20,width:42,height:42,borderRadius:21,backgroundColor:'#181922',borderWidth:1,borderColor:'#2B2D38',alignItems:'center',justifyContent:'center',zIndex:4},slideArrowLeft:{left:14},slideArrowRight:{right:14},slideArrowDisabled:{opacity:0.25},bottom:{position:'absolute',left:25,right:25,bottom:100},title:{fontSize:23,fontWeight:'900',color:C.text},subtitle:{fontSize:14,color:C.muted,marginTop:5},progress:{height:3,backgroundColor:'#292B34',marginTop:13,borderRadius:3},fill:{height:3,backgroundColor:C.accent,borderRadius:3},nav:{position:'absolute',bottom:0,left:0,right:0,height:78,backgroundColor:'#09090D',borderTopWidth:1,borderTopColor:'#1B1C23',flexDirection:'row',justifyContent:'space-around',paddingTop:10},navItem:{alignItems:'center',width:'25%'},navText:{fontSize:11,color:'#676975',marginTop:4,fontWeight:'700'},search:{position:'absolute',zIndex:6,top:44,left:18,right:18,backgroundColor:C.card,borderRadius:14,padding:13,color:C.text,borderWidth:1,borderColor:'#252732'},profile:{flex:1,padding:25,paddingTop:80},profileKicker:{color:C.muted,fontSize:14,textTransform:'uppercase',letterSpacing:2,fontWeight:'800'},profileName:{color:C.text,fontSize:36,fontWeight:'900',marginTop:5},profileMeta:{color:C.muted,fontSize:14,marginTop:4},levelCard:{backgroundColor:C.card,borderRadius:18,padding:16,marginTop:18,borderWidth:1,borderColor:'#252732'},levelRow:{flexDirection:'row',justifyContent:'space-between'},levelLabel:{color:C.text,fontWeight:'900',fontSize:12},levelXp:{color:C.muted,fontWeight:'700',fontSize:12},levelBar:{height:6,backgroundColor:'#292B34',borderRadius:6,marginTop:10,overflow:'hidden'},levelFill:{height:6,backgroundColor:C.accent,borderRadius:6},dailyCard:{backgroundColor:'#17122B',borderRadius:18,padding:17,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},dailyTitle:{color:C.text,fontSize:18,fontWeight:'900'},dailyBody:{color:C.muted,fontSize:13,lineHeight:18,marginTop:4,maxWidth:260},profileGoal:{color:C.text,fontSize:17,fontWeight:'800',backgroundColor:C.card,padding:15,borderRadius:14},stats:{flexDirection:'row',marginTop:25,gap:10},stat:{flex:1,backgroundColor:C.card,borderRadius:16,padding:16},statN:{color:C.text,fontSize:25,fontWeight:'900'},statL:{color:C.muted,fontSize:12,marginTop:4},section:{color:C.muted,fontSize:12,fontWeight:'900',letterSpacing:2,marginTop:28,marginBottom:10},chips:{flexDirection:'row',flexWrap:'wrap',gap:8},chip:{borderWidth:1,borderColor:'#2A2C37',borderRadius:20,paddingVertical:9,paddingHorizontal:13},chipOn:{backgroundColor:'#241D3D',borderColor:C.accent},chipText:{color:C.text,fontWeight:'700'},proCard:{backgroundColor:'#17122B',borderRadius:20,padding:20,borderWidth:1,borderColor:'#30285B'},proTitle:{color:C.text,fontSize:20,fontWeight:'900'},proBody:{color:C.muted,lineHeight:21,marginTop:8},proButton:{backgroundColor:C.accent,borderRadius:12,padding:13,alignItems:'center',marginTop:15},logout:{marginTop:20,alignItems:'center'},logoutText:{color:C.pink,fontWeight:'800'}});
+const styles=StyleSheet.create({dbScreen:{flex:1,backgroundColor:C.bg,padding:28,paddingTop:52},dbCard:{marginTop:'auto',marginBottom:'auto',backgroundColor:C.card,borderRadius:24,padding:24,borderWidth:1,borderColor:'#252732'},dbTitle:{color:C.text,fontSize:28,lineHeight:34,fontWeight:'900',marginTop:18},dbBody:{color:C.muted,fontSize:16,lineHeight:24,marginTop:12},dbErrorBox:{marginTop:18,backgroundColor:'#190F16',borderRadius:14,padding:14,borderWidth:1,borderColor:'#51253A'},dbErrorLabel:{color:C.pink,fontSize:10,fontWeight:'900',letterSpacing:2,marginBottom:7},dbErrorText:{color:'#F0DDE5',fontSize:13,lineHeight:19},dbHint:{color:'#666875',fontSize:11,lineHeight:16,marginTop:16},app:{flex:1,backgroundColor:C.bg},auth:{flex:1,backgroundColor:C.bg,padding:28,justifyContent:'center'},logo:{fontSize:20,fontWeight:'900',letterSpacing:2,color:C.text},authTitle:{fontSize:42,lineHeight:48,fontWeight:'900',color:C.text,marginTop:55},authSub:{fontSize:17,lineHeight:25,color:C.muted,marginTop:18,marginBottom:22},input:{backgroundColor:C.card,borderRadius:14,padding:16,color:C.text,fontSize:16,borderWidth:1,borderColor:'#22242D'},primary:{backgroundColor:C.accent,borderRadius:14,padding:17,alignItems:'center',marginTop:12},primaryText:{color:'#fff',fontWeight:'800',fontSize:16},small:{color:'#666875',textAlign:'center',marginTop:18,lineHeight:19},onboard:{flex:1,backgroundColor:C.bg,padding:28,paddingTop:46},onboardTop:{marginTop:30},onboardStep:{color:C.muted,fontSize:11,fontWeight:'900',letterSpacing:2},onboardProgress:{height:4,backgroundColor:'#22232C',borderRadius:4,marginTop:9},onboardProgressFill:{height:4,backgroundColor:C.accent,borderRadius:4},choiceGrid:{flexDirection:'row',flexWrap:'wrap',gap:10,marginTop:16},choice:{width:'48%',backgroundColor:C.card,borderRadius:18,padding:18,minHeight:86,borderWidth:1,borderColor:'#252732',alignItems:'center',justifyContent:'center',gap:8},choiceOn:{borderColor:C.accent,backgroundColor:'#211A38'},choiceText:{color:C.text,fontWeight:'800',fontSize:15,textAlign:'center'},choiceList:{marginTop:12,gap:10},choiceWide:{backgroundColor:C.card,borderRadius:16,padding:17,borderWidth:1,borderColor:'#252732'},choiceTitle:{color:C.text,fontSize:17,fontWeight:'800'},choiceHint:{color:C.muted,fontSize:13,marginTop:4,lineHeight:18},onboardActions:{flexDirection:'row',gap:10,marginTop:'auto',paddingTop:24},secondary:{borderWidth:1,borderColor:'#2A2C37',borderRadius:14,padding:17,alignItems:'center',justifyContent:'center'},secondaryText:{color:C.text,fontWeight:'800'},header:{position:'absolute',zIndex:5,top:8,left:18,right:18,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:4},feedTabs:{position:'absolute',left:0,right:0,flexDirection:'row',justifyContent:'center',gap:18},feedTabActive:{color:C.text,fontWeight:'900',fontSize:14},feedTab:{color:'#666875',fontWeight:'700',fontSize:14},xp:{flexDirection:'row',alignItems:'center',backgroundColor:'#12131A',paddingHorizontal:10,paddingVertical:6,borderRadius:16},xpText:{color:C.text,fontWeight:'800',marginLeft:4},generalNotice:{position:'absolute',top:82,left:28,right:28,zIndex:20,backgroundColor:'#17122BEE',borderRadius:14,borderWidth:1,borderColor:'#30285B',padding:12,flexDirection:'row',alignItems:'center',gap:8},generalNoticeText:{color:C.text,fontSize:13,fontWeight:'700',flex:1},feedViewport:{flex:1,overflow:'hidden',overscrollBehavior:'none',touchAction:'none'},pagerCard:{width:'100%'},lesson:{width:W,paddingHorizontal:25,paddingTop:55,paddingBottom:95,overflow:'hidden'},orb:{position:'absolute',width:280,height:280,borderRadius:140,backgroundColor:'#17122B',right:-100,top:90},lessonTop:{flexDirection:'row',justifyContent:'space-between'},category:{color:C.cyan,fontSize:12,fontWeight:'900',letterSpacing:2},counter:{color:'#676975',fontWeight:'700'},eyebrow:{color:C.accent,fontWeight:'900',letterSpacing:2,fontSize:12,marginBottom:14},big:{fontSize:50,lineHeight:54,fontWeight:'900',color:C.text},h1:{fontSize:35,lineHeight:41,fontWeight:'900',color:C.text,marginBottom:18},body:{fontSize:20,lineHeight:30,color:'#D5D6DD'},flow:{backgroundColor:C.card,borderRadius:24,padding:22,borderWidth:1,borderColor:'#20222C'},flowItem:{color:C.text,fontSize:21,fontWeight:'800',paddingVertical:7},arrow:{color:C.accent,fontSize:20,textAlign:'center',paddingVertical:2},code:{backgroundColor:'#0D0E13',borderRadius:18,padding:20,borderWidth:1,borderColor:'#292B38'},codeText:{color:C.cyan,fontFamily:'monospace',fontSize:16,lineHeight:25},summary:{backgroundColor:'#17122B',borderRadius:24,padding:24,borderWidth:1,borderColor:'#30285B'},callout:{backgroundColor:'#101A20',borderRadius:24,padding:22,borderWidth:1,borderColor:'#24424A'},calloutKicker:{color:C.cyan,fontSize:11,fontWeight:'900',letterSpacing:2,marginBottom:10},calloutTitle:{color:C.text,fontSize:27,lineHeight:32,fontWeight:'900',marginBottom:10},calloutBody:{color:'#D5D6DD',fontSize:17,lineHeight:25},summaryText:{color:C.text,fontSize:23,lineHeight:32,fontWeight:'700'},option:{backgroundColor:C.card,borderRadius:15,padding:17,marginBottom:10,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:'#252732'},optionChosen:{borderColor:C.accent},optionCorrect:{borderColor:C.green},optionText:{color:C.text,fontSize:16,fontWeight:'600',flex:1},feedback:{fontWeight:'800',fontSize:16,marginTop:6},side:{position:'absolute',right:12,bottom:138,gap:18,alignItems:'center'},actionButton:{alignItems:'center',minWidth:48},actionLabel:{color:C.text,fontSize:10,fontWeight:'700',marginTop:3},heartBurst:{position:'absolute',left:0,right:0,top:0,bottom:0,alignItems:'center',justifyContent:'center',zIndex:8},paused:{position:'absolute',top:'48%',left:'50%',marginLeft:-50,marginTop:-20,backgroundColor:'#181922DD',borderRadius:24,paddingHorizontal:16,paddingVertical:10,flexDirection:'row',alignItems:'center',gap:7,zIndex:7},pausedText:{color:C.text,fontWeight:'800'},slideArrow:{position:'absolute',top:'50%',marginTop:-20,width:42,height:42,borderRadius:21,backgroundColor:'#181922',borderWidth:1,borderColor:'#2B2D38',alignItems:'center',justifyContent:'center',zIndex:4},slideArrowLeft:{left:14},slideArrowRight:{right:14},slideArrowDisabled:{opacity:0.25},bottom:{position:'absolute',left:25,right:25,bottom:100},title:{fontSize:23,fontWeight:'900',color:C.text},subtitle:{fontSize:14,color:C.muted,marginTop:5},progress:{height:3,backgroundColor:'#292B34',marginTop:13,borderRadius:3},fill:{height:3,backgroundColor:C.accent,borderRadius:3},nav:{position:'absolute',bottom:0,left:0,right:0,height:78,backgroundColor:'#09090D',borderTopWidth:1,borderTopColor:'#1B1C23',flexDirection:'row',justifyContent:'space-around',paddingTop:10},navItem:{alignItems:'center',width:'25%'},navText:{fontSize:11,color:'#676975',marginTop:4,fontWeight:'700'},search:{position:'absolute',zIndex:6,top:44,left:18,right:18,backgroundColor:C.card,borderRadius:14,padding:13,color:C.text,borderWidth:1,borderColor:'#252732'},profile:{flex:1,padding:25,paddingTop:80},profileKicker:{color:C.muted,fontSize:14,textTransform:'uppercase',letterSpacing:2,fontWeight:'800'},profileName:{color:C.text,fontSize:36,fontWeight:'900',marginTop:5},profileMeta:{color:C.muted,fontSize:14,marginTop:4},levelCard:{backgroundColor:C.card,borderRadius:18,padding:16,marginTop:18,borderWidth:1,borderColor:'#252732'},levelRow:{flexDirection:'row',justifyContent:'space-between'},levelLabel:{color:C.text,fontWeight:'900',fontSize:12},levelXp:{color:C.muted,fontWeight:'700',fontSize:12},levelBar:{height:6,backgroundColor:'#292B34',borderRadius:6,marginTop:10,overflow:'hidden'},levelFill:{height:6,backgroundColor:C.accent,borderRadius:6},dailyCard:{backgroundColor:'#17122B',borderRadius:18,padding:17,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},dailyTitle:{color:C.text,fontSize:18,fontWeight:'900'},dailyBody:{color:C.muted,fontSize:13,lineHeight:18,marginTop:4,maxWidth:260},profileGoal:{color:C.text,fontSize:17,fontWeight:'800',backgroundColor:C.card,padding:15,borderRadius:14},stats:{flexDirection:'row',marginTop:25,gap:10},stat:{flex:1,backgroundColor:C.card,borderRadius:16,padding:16},statN:{color:C.text,fontSize:25,fontWeight:'900'},statL:{color:C.muted,fontSize:12,marginTop:4},section:{color:C.muted,fontSize:12,fontWeight:'900',letterSpacing:2,marginTop:28,marginBottom:10},chips:{flexDirection:'row',flexWrap:'wrap',gap:8},chip:{borderWidth:1,borderColor:'#2A2C37',borderRadius:20,paddingVertical:9,paddingHorizontal:13},chipOn:{backgroundColor:'#241D3D',borderColor:C.accent},chipText:{color:C.text,fontWeight:'700'},proCard:{backgroundColor:'#17122B',borderRadius:20,padding:20,borderWidth:1,borderColor:'#30285B'},proTitle:{color:C.text,fontSize:20,fontWeight:'900'},proBody:{color:C.muted,lineHeight:21,marginTop:8},proButton:{backgroundColor:C.accent,borderRadius:12,padding:13,alignItems:'center',marginTop:15},logout:{marginTop:20,alignItems:'center'},logoutText:{color:C.pink,fontWeight:'800'}});
