@@ -5,6 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "android": {"package": "com.bytelearn.app"}
+    "android": {
+      "package": "com.bytelearn.app"
+    },
+    "web": {
+      "output": "static",
+      "favicon": null
+    }
   }
 }
