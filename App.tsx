@@ -119,23 +119,74 @@ export default function App(){
  useEffect(()=>{if(!hydrated)return;AsyncStorage.setItem('bytelearn_state',JSON.stringify({logged,name,interests,skillLevel,goal,dailyGoal,onboardingDone,completed,quizBonusAwarded,saved,liked,pro,xp,streak,dailyProgressDate,dailyCompleted,lastGoalDate}))},[hydrated,logged,name,interests,skillLevel,goal,dailyGoal,onboardingDone,completed,quizBonusAwarded,saved,liked,pro,xp,streak,dailyProgressDate,dailyCompleted,lastGoalDate]);
 
  useEffect(()=>{
-  if(!hasSupabaseConfig||!supabase)return;let mounted=true;
-  (async()=>{try{
-   let {data:{session}}=await supabase.auth.getSession();if(!session){const auth=await supabase.auth.signInAnonymously();session=auth.data.session}
-   if(!session?.user||!mounted)return;const uid=session.user.id;setUserId(uid);
-   const [lessonRes,profileRes,interactionRes]=await Promise.all([
-    supabase.from('lessons').select('id,category,title,subtitle,tag,difficulty,scenes').eq('published',true).order('created_at',{ascending:false}),
-    supabase.from('profiles').select('display_name,interests,level,goal,daily_goal,xp,streak,last_goal_date,is_pro,onboarding_completed').eq('id',uid).maybeSingle(),
-    supabase.from('user_lessons').select('lesson_id,completed,liked,saved,completed_at,quiz_bonus_awarded').eq('user_id',uid)
-   ]);
-   if(lessonRes.data?.length)setLessonFeed(lessonRes.data.map((l:any)=>enrichLesson({...l,scenes:l.scenes as Scene[]})));
-   if(profileRes.data){setName(profileRes.data.display_name||'');setInterests(profileRes.data.interests?.length?profileRes.data.interests:['AI','Programming']);setSkillLevel(profileRes.data.level||'Beginner');setGoal(profileRes.data.goal||'Grow at work');setDailyGoal(profileRes.data.daily_goal||5);setXp(profileRes.data.xp||0);setStreak(profileRes.data.streak||0);setLastGoalDate(profileRes.data.last_goal_date||null);setPro(!!profileRes.data.is_pro);setOnboardingDone(!!profileRes.data.onboarding_completed);setLogged(true)}else setLogged(true);
-   if(interactionRes.data){const today=localDateKey();setCompleted(interactionRes.data.filter((x:any)=>x.completed).map((x:any)=>x.lesson_id));setSaved(interactionRes.data.filter((x:any)=>x.saved).map((x:any)=>x.lesson_id));setLiked(interactionRes.data.filter((x:any)=>x.liked).map((x:any)=>x.lesson_id));setQuizBonusAwarded(interactionRes.data.filter((x:any)=>x.quiz_bonus_awarded).map((x:any)=>x.lesson_id));setDailyProgressDate(today);setDailyCompleted(interactionRes.data.filter((x:any)=>x.completed&&x.completed_at&&localDateKey(new Date(x.completed_at))===today).length)}
-   setBackendReady(true);
-  }catch(e){console.warn('Supabase bootstrap failed; using local mode.',e)}})();
+  if(!hasSupabaseConfig||!supabase)return;
+  let mounted=true;
+  (async()=>{
+    // Load the public lesson catalog independently of authentication.
+    // This keeps the learning feed working even if anonymous auth is not enabled yet.
+    try{
+      const lessonRes=await supabase.from('lessons').select('id,category,title,subtitle,tag,difficulty,scenes').eq('published',true).order('created_at',{ascending:false});
+      if(lessonRes.error) throw lessonRes.error;
+      if(mounted){
+        setLessonFeed((lessonRes.data||[]).map((l:any)=>enrichLesson({...l,scenes:l.scenes as Scene[]})));
+        setBackendReady(true);
+      }
+    }catch(e){
+      console.warn('Supabase lesson catalog failed; using local lessons.',e);
+    }
+
+    // User state is best-effort. Anonymous sign-in is required for progress, likes and saves.
+    try{
+      const sessionResult=await supabase.auth.getSession();
+      let session=sessionResult.data.session;
+      if(!session){
+        const auth=await supabase.auth.signInAnonymously();
+        if(auth.error) throw auth.error;
+        session=auth.data.session;
+      }
+      if(!session?.user||!mounted)return;
+      const uid=session.user.id;
+      setUserId(uid);
+
+      const [profileRes,interactionRes]=await Promise.all([
+        supabase.from('profiles').select('display_name,interests,level,goal,daily_goal,xp,streak,last_goal_date,is_pro,onboarding_completed').eq('id',uid).maybeSingle(),
+        supabase.from('user_lessons').select('lesson_id,completed,liked,saved,completed_at,quiz_bonus_awarded').eq('user_id',uid)
+      ]);
+
+      if(profileRes.error) throw profileRes.error;
+      if(interactionRes.error) throw interactionRes.error;
+
+      if(profileRes.data){
+        setName(profileRes.data.display_name||'');
+        setInterests(profileRes.data.interests?.length?profileRes.data.interests:['AI','Programming']);
+        setSkillLevel(profileRes.data.level||'Beginner');
+        setGoal(profileRes.data.goal||'Grow at work');
+        setDailyGoal(profileRes.data.daily_goal||5);
+        setXp(profileRes.data.xp||0);
+        setStreak(profileRes.data.streak||0);
+        setLastGoalDate(profileRes.data.last_goal_date||null);
+        setPro(!!profileRes.data.is_pro);
+        setOnboardingDone(!!profileRes.data.onboarding_completed);
+        setLogged(true);
+      }else{
+        setLogged(true);
+      }
+
+      if(interactionRes.data){
+        const today=localDateKey();
+        setCompleted(interactionRes.data.filter((x:any)=>x.completed).map((x:any)=>x.lesson_id));
+        setSaved(interactionRes.data.filter((x:any)=>x.saved).map((x:any)=>x.lesson_id));
+        setLiked(interactionRes.data.filter((x:any)=>x.liked).map((x:any)=>x.lesson_id));
+        setQuizBonusAwarded(interactionRes.data.filter((x:any)=>x.quiz_bonus_awarded).map((x:any)=>x.lesson_id));
+        setDailyProgressDate(today);
+        setDailyCompleted(interactionRes.data.filter((x:any)=>x.completed&&x.completed_at&&localDateKey(new Date(x.completed_at))===today).length);
+      }
+    }catch(e){
+      console.warn('Supabase auth bootstrap failed; using local user state.',e);
+    }
+  })();
   return()=>{mounted=false};
  },[]);
-
  const persistProfile=async(nextName=name,nextInterests=interests,nextPro=pro,nextOnboarding=onboardingDone)=>{
   if(!supabase||!userId)return;
   await supabase.from('profiles').upsert({id:userId,display_name:nextName,interests:nextInterests,level:skillLevel,goal,daily_goal:dailyGoal,xp,streak,last_goal_date:lastGoalDate,is_pro:nextPro,onboarding_completed:nextOnboarding});
