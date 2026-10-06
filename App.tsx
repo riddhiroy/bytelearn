@@ -111,7 +111,7 @@ export default function App(){
  const [interests,setInterests]=useState<string[]>(['AI','Programming']),[skillLevel,setSkillLevel]=useState('Beginner'),[goal,setGoal]=useState('Grow at work'),[dailyGoal,setDailyGoal]=useState(5),[onboardingDone,setOnboardingDone]=useState(false),[onboardingStep,setOnboardingStep]=useState(0);
  const [completed,setCompleted]=useState<string[]>([]),[quizBonusAwarded,setQuizBonusAwarded]=useState<string[]>([]),[saved,setSaved]=useState<string[]>([]),[liked,setLiked]=useState<string[]>([]);
  const [xp,setXp]=useState(0),[streak,setStreak]=useState(0),[dailyCompleted,setDailyCompleted]=useState(0),[dailyProgressDate,setDailyProgressDate]=useState(localDateKey()),[lastGoalDate,setLastGoalDate]=useState<string|null>(null);
- const [query,setQuery]=useState(''),[pro,setPro]=useState(false),[lessonFeed,setLessonFeed]=useState<Lesson[]>([]),[userId,setUserId]=useState<string|null>(null),[backendReady,setBackendReady]=useState(false),[hydrated,setHydrated]=useState(false),[showGeneralizedNotice,setShowGeneralizedNotice]=useState(false),[dbStatus,setDbStatus]=useState<'connecting'|'connected'|'error'>('connecting'),[dbError,setDbError]=useState('');
+ const [query,setQuery]=useState(''),[pro,setPro]=useState(false),[lessonFeed,setLessonFeed]=useState<Lesson[]>([]),[userId,setUserId]=useState<string|null>(null),[backendReady,setBackendReady]=useState(false),[hydrated,setHydrated]=useState(false),[showGeneralizedNotice,setShowGeneralizedNotice]=useState(false),[dbStatus,setDbStatus]=useState<'connecting'|'connected'|'error'>('connecting'),[dbError,setDbError]=useState(''),[dbRetry,setDbRetry]=useState(0);
 
  useEffect(()=>{if(Platform.OS==='web'&&typeof document!=='undefined'){const html=document.documentElement,body=document.body;const prevHtml=html.style.overscrollBehaviorY,prevBody=body.style.overscrollBehaviorY;html.style.overscrollBehaviorY='none';body.style.overscrollBehaviorY='none';html.style.overflow='hidden';body.style.overflow='hidden';return()=>{html.style.overscrollBehaviorY=prevHtml;body.style.overscrollBehaviorY=prevBody;html.style.overflow='';body.style.overflow=''}}},[]);
  useEffect(()=>{setFeedIndex(0);feedOffset.setValue(0);setShowGeneralizedNotice(false)},[screen,feedMode,query,interests,skillLevel,goal]);
@@ -215,7 +215,7 @@ export default function App(){
 
   loadDatabase();
   return()=>{cancelled=true};
- },[dbStatus]);
+ },[dbRetry]);
  const persistProfile=async(nextName=name,nextInterests=interests,nextPro=pro,nextOnboarding=onboardingDone)=>{
   if(!supabase||!userId)return;
   await supabase.from('profiles').upsert({id:userId,display_name:nextName,interests:nextInterests,level:skillLevel,goal,daily_goal:dailyGoal,xp,streak,last_goal_date:lastGoalDate,is_pro:nextPro,onboarding_completed:nextOnboarding});
@@ -258,7 +258,7 @@ export default function App(){
         <Text style={styles.dbErrorLabel}>SUPABASE ERROR</Text>
         <Text style={styles.dbErrorText}>{dbError}</Text>
       </View>}
-      {dbStatus==='error'&&<Pressable style={styles.primary} onPress={()=>setDbStatus('connecting')}>
+      {dbStatus==='error'&&<Pressable style={styles.primary} onPress={()=>{setDbError('');setDbStatus('connecting');setDbRetry(x=>x+1)}}>
         <Text style={styles.primaryText}>Retry connection</Text>
       </Pressable>}
       <Text style={styles.dbHint}>Database: gekygmwrwdkfxrvkwgtl.supabase.co</Text>
