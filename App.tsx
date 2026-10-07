@@ -261,7 +261,7 @@ export default function App(){
       {dbStatus==='error'&&<Pressable style={styles.primary} onPress={()=>{setDbError('');setDbStatus('connecting');setDbRetry(x=>x+1)}}>
         <Text style={styles.primaryText}>Retry connection</Text>
       </Pressable>}
-      <Text style={styles.dbHint}>Database: gekygmwrwdkfxrvkwgtl.supabase.co</Text>
+      <Text style={styles.dbHint}>Database: gekygmrwrdkfxrvkwgtl.supabase.co</Text>
     </View>
   </SafeAreaView>;
  }
