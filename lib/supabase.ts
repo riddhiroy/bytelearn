@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 // when running directly with Expo.
 const url =
   process.env.EXPO_PUBLIC_SUPABASE_URL ??
-  'https://gekygmwrwdkfxrvkwgtl.supabase.co';
+  'https://gekygmrwrdkfxrvkwgtl.supabase.co';
 
 const key =
   process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
