@@ -1,0 +1,78 @@
+{
+  "id": "async-await",
+  "category": "Programming",
+  "title": "Why async code returns too early",
+  "subtitle": "Understand promises before a race becomes a bug",
+  "tag": "DEBUGGING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "javascript",
+    "async",
+    "debugging"
+  ],
+  "learning_objective": "Predict when asynchronous work completes and correctly await its result.",
+  "source_refs": [
+    {
+      "title": "MDN: async function",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function",
+      "supports": "async functions return promises and await pauses execution within the async function"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE EMPTY RESULT",
+      "body": "Your function fetches user data, but the caller sees undefined. The request still finishes later. What happened?"
+    },
+    {
+      "kind": "text",
+      "title": "An async function returns a promise",
+      "body": "Calling an async function gives you a Promise immediately. The value you want arrives when that promise settles—not when the function call first returns."
+    },
+    {
+      "kind": "flow",
+      "title": "Follow the timeline",
+      "items": [
+        "Call loadUser()",
+        "↓",
+        "Promise returned",
+        "↓",
+        "await promise",
+        "↓",
+        "Use resolved user"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "The fix",
+      "code": "async function getName() {\n  const user = await loadUser();\n  return user.name;\n}\n\nconst name = await getName();"
+    },
+    {
+      "kind": "callout",
+      "title": "Common trap",
+      "body": "Returning a promise is not the same as returning its resolved value. Await it, or return the promise and let the caller await it."
+    },
+    {
+      "kind": "quiz",
+      "question": "What does calling an async function return?",
+      "options": [
+        "Always a plain object",
+        "A Promise",
+        "Only undefined"
+      ],
+      "answer": 1,
+      "explanation": "An async function always returns a Promise. A returned value becomes that promise's fulfillment value."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Trace the promise boundary. Await the result at the point where you actually need the value."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
