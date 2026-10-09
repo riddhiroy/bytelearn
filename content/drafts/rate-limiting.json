@@ -1,0 +1,77 @@
+{
+  "id": "rate-limiting",
+  "category": "Programming",
+  "title": "How rate limiting protects an API",
+  "subtitle": "Control bursts without confusing limits with capacity",
+  "tag": "APIS & DATA",
+  "difficulty": "Intermediate",
+  "tags": [
+    "api",
+    "reliability"
+  ],
+  "learning_objective": "Explain rate limiting and select a useful response to clients that exceed a quota.",
+  "source_refs": [
+    {
+      "title": "MDN: 429 Too Many Requests",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+      "supports": "HTTP 429 response semantics"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "ONE CLIENT, 10,000 REQUESTS",
+      "body": "A retrying client or abusive caller overwhelms a service. How do you protect everyone else?"
+    },
+    {
+      "kind": "text",
+      "title": "Limit requests over a window",
+      "body": "Rate limiting caps requests or resource use per identity, key, or service. It protects shared capacity and can enforce fair usage."
+    },
+    {
+      "kind": "flow",
+      "title": "A typical response",
+      "items": [
+        "Request arrives",
+        "↓",
+        "Check quota",
+        "↙          ↘",
+        "Allowed      Limit exceeded",
+        "↓                 ↓",
+        "Process       429 response"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Help well-behaved clients",
+      "body": "Return clear limit information and, when known, a Retry-After hint. Clients should back off instead of immediately retrying."
+    },
+    {
+      "kind": "code",
+      "title": "HTTP response",
+      "code": "HTTP/1.1 429 Too Many Requests\nRetry-After: 30"
+    },
+    {
+      "kind": "quiz",
+      "question": "What should a well-behaved client do after a rate-limit response?",
+      "options": [
+        "Retry in a tight loop",
+        "Back off and respect retry guidance",
+        "Change the request body randomly"
+      ],
+      "answer": 1,
+      "explanation": "Immediate retries amplify load. Backoff and retry guidance help the client recover without worsening the overload."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Rate limits protect capacity; clear responses and client backoff make them effective."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
