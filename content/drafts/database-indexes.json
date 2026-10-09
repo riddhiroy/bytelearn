@@ -1,0 +1,79 @@
+{
+  "id": "database-indexes",
+  "category": "Programming",
+  "title": "Why an index speeds up reads but slows writes",
+  "subtitle": "Understand the trade-off behind database indexes",
+  "tag": "DATABASES",
+  "difficulty": "Intermediate",
+  "tags": [
+    "database",
+    "performance"
+  ],
+  "learning_objective": "Explain how an index reduces lookup work and adds write-maintenance cost.",
+  "source_refs": [
+    {
+      "title": "PostgreSQL: Indexes",
+      "url": "https://www.postgresql.org/docs/current/indexes.html",
+      "supports": "index use and trade-offs"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE SLOW QUERY",
+      "body": "A query scans millions of rows to find one user. An index can change how the database searches."
+    },
+    {
+      "kind": "text",
+      "title": "An index is an access path",
+      "body": "A suitable index lets the database locate matching rows without scanning the whole table. The optimizer decides whether using it is worthwhile."
+    },
+    {
+      "kind": "flow",
+      "title": "Read vs write",
+      "items": [
+        "Read without index",
+        "↓",
+        "Scan many rows",
+        "Read with index",
+        "↓",
+        "Navigate index to matches",
+        "Insert/update",
+        "↓",
+        "Maintain index too"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Indexes aren't free",
+      "body": "Each extra index consumes storage and adds work to inserts, deletes, and some updates. Index columns that match real query patterns."
+    },
+    {
+      "kind": "code",
+      "title": "Example",
+      "code": "CREATE INDEX idx_orders_customer\nON orders (customer_id);\n\nSELECT * FROM orders\nWHERE customer_id = 42;"
+    },
+    {
+      "kind": "quiz",
+      "question": "Why can too many indexes hurt write performance?",
+      "options": [
+        "The database must maintain them as data changes",
+        "Indexes disable transactions",
+        "Indexes always duplicate the whole table"
+      ],
+      "answer": 0,
+      "explanation": "The database must update relevant index structures when rows are inserted, deleted, or changed."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Add indexes to support measured query patterns, then check the query plan and write cost."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
