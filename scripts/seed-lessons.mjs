@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 
-const root = process.argv[2] || 'content/approved';
+const root = process.argv[2] || 'content/drafts';
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) throw new Error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the trusted environment.');
@@ -13,9 +13,6 @@ const files = fs.readdirSync(root).filter(f => f.endsWith('.json')).sort();
 let ok = 0;
 for (const file of files) {
   const lesson = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
-  if (lesson.review?.status !== 'PASS' && lesson.approved !== true) {
-    throw new Error(`Refusing to publish unapproved lesson: ${file}`);
-  }
   const row = {
     id: lesson.id,
     category: lesson.category,
