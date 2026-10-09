@@ -1,0 +1,77 @@
+{
+  "id": "unit-testing",
+  "category": "Programming",
+  "title": "Test behavior, not implementation details",
+  "subtitle": "Write tests that survive refactoring",
+  "tag": "TESTING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "testing",
+    "maintainability"
+  ],
+  "learning_objective": "Choose assertions that verify observable behavior rather than internal call sequences.",
+  "source_refs": [
+    {
+      "title": "Martin Fowler: Unit Test",
+      "url": "https://martinfowler.com/bliki/UnitTest.html",
+      "supports": "unit testing concepts and test boundaries"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE FRAGILE TEST",
+      "body": "A harmless refactor changes a private helper and breaks 30 tests—even though the feature still works."
+    },
+    {
+      "kind": "text",
+      "title": "Assert the contract",
+      "body": "A useful test checks observable inputs and outputs or externally meaningful effects. Tests tightly coupled to internal method calls make refactoring expensive."
+    },
+    {
+      "kind": "flow",
+      "title": "A durable test",
+      "items": [
+        "Arrange input",
+        "↓",
+        "Run public behavior",
+        "↓",
+        "Assert outcome",
+        "↓",
+        "Ignore irrelevant internals"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "Prefer an outcome",
+      "code": "expect(formatPrice(1200)).toBe('$12.00');\n// Prefer this contract over asserting\n// every private helper invocation."
+    },
+    {
+      "kind": "callout",
+      "title": "When interactions matter",
+      "body": "Mock or assert a dependency interaction when it is part of the contract—such as ensuring a payment is not charged twice."
+    },
+    {
+      "kind": "quiz",
+      "question": "Which test is usually more resilient?",
+      "options": [
+        "One asserting a private helper was called 4 times",
+        "One asserting the public result is correct",
+        "One asserting local variable names"
+      ],
+      "answer": 1,
+      "explanation": "The public result is the behavior users depend on; private implementation details can change during refactoring."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Test behavior that matters to callers. Assert implementation details only when they are genuinely part of the contract."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
