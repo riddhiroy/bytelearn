@@ -1,0 +1,78 @@
+{
+  "id": "pagination",
+  "category": "Programming",
+  "title": "Why cursor pagination beats huge offsets",
+  "subtitle": "Make large result sets more predictable",
+  "tag": "APIS & DATA",
+  "difficulty": "Intermediate",
+  "tags": [
+    "api",
+    "database",
+    "pagination"
+  ],
+  "learning_objective": "Choose offset or cursor pagination based on dataset size and consistency needs.",
+  "source_refs": [
+    {
+      "title": "PostgreSQL: LIMIT and OFFSET",
+      "url": "https://www.postgresql.org/docs/current/queries-limit.html",
+      "supports": "LIMIT/OFFSET behavior"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "PAGE 500 IS SLOW",
+      "body": "Your API fetches page 500 by skipping thousands of rows before returning 20 results."
+    },
+    {
+      "kind": "text",
+      "title": "Offset asks the database to skip",
+      "body": "Offset pagination is simple, but large offsets can require increasing work. Inserts or deletes between requests can also shift page boundaries."
+    },
+    {
+      "kind": "flow",
+      "title": "Cursor pagination",
+      "items": [
+        "Request first 20 rows",
+        "↓",
+        "Remember last sort key",
+        "↓",
+        "Request rows after that key",
+        "↓",
+        "Continue from cursor"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "Stable ordering matters",
+      "code": "SELECT id, created_at\nFROM events\nWHERE (created_at, id) > ($1, $2)\nORDER BY created_at, id\nLIMIT 20;"
+    },
+    {
+      "kind": "callout",
+      "title": "Avoid skipped or repeated rows",
+      "body": "Use a deterministic ordering with a unique tie-breaker. Cursor design must match the database and the intended consistency behavior."
+    },
+    {
+      "kind": "quiz",
+      "question": "Why include a unique tie-breaker in cursor ordering?",
+      "options": [
+        "To make ordering deterministic when timestamps tie",
+        "To encrypt the cursor",
+        "To eliminate the need for an index in every case"
+      ],
+      "answer": 0,
+      "explanation": "Rows with the same primary sort value need a stable secondary key so pagination can continue without ambiguity."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Offset is convenient for small lists; cursor pagination often scales better for large, changing feeds."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
