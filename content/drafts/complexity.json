@@ -1,0 +1,74 @@
+{
+  "id": "complexity",
+  "category": "Programming",
+  "title": "Why a loop can become a performance problem",
+  "subtitle": "Spot quadratic work before production traffic does",
+  "tag": "PERFORMANCE",
+  "difficulty": "Intermediate",
+  "tags": [
+    "algorithms",
+    "performance"
+  ],
+  "learning_objective": "Recognize common time-complexity patterns and predict how work scales.",
+  "source_refs": [
+    {
+      "title": "Big-O Cheat Sheet",
+      "url": "https://www.bigocheatsheet.com/",
+      "supports": "reference for common algorithm complexity; verify examples independently"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "10× THE DATA",
+      "body": "A feature works with 100 records and crawls with 10,000. The hidden cost may be nested work."
+    },
+    {
+      "kind": "text",
+      "title": "Count growth, not milliseconds",
+      "body": "Big O describes how work grows with input size. A single pass is typically O(n); comparing every item with every other item can be O(n²)."
+    },
+    {
+      "kind": "flow",
+      "title": "Growth intuition",
+      "items": [
+        "n = 100",
+        "One pass ≈ 100 steps",
+        "Pairwise work ≈ 10,000 pairs",
+        "n grows 10× → pairwise work ~100×"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "A hidden nested loop",
+      "code": "for (const a of items) {\n  for (const b of items) {\n    compare(a, b);\n  }\n}"
+    },
+    {
+      "kind": "callout",
+      "title": "Practical move",
+      "body": "Profile first, then inspect repeated scans, nested loops, and database calls inside loops. Real runtime also depends on constants and data shape."
+    },
+    {
+      "kind": "quiz",
+      "question": "If n increases from 1,000 to 10,000, how does n² work scale approximately?",
+      "options": [
+        "10×",
+        "100×",
+        "It stays constant"
+      ],
+      "answer": 1,
+      "explanation": "Quadratic work grows with the square of input size. A 10× increase in n means roughly 100× as many pairwise operations."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Estimate how work grows with data size, then measure the real bottleneck."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
