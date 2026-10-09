@@ -24,6 +24,18 @@ The seeder uses an upsert by lesson ID, so reruns reconcile the same record inst
 
 Do not call the launch library complete until the database has the intended number of distinct published lessons, every lesson has passed validation and review, and the actual app renders the full catalog correctly. The existing hard-coded/local lesson catalog and any current Supabase rows must be reconciled before counting toward 200.
 
+## One-click 200-lesson generation
+
+The repository includes `.github/workflows/generate-lessons.yml`. To generate and publish the full catalog without a manual approval/review step:
+
+1. In GitHub, open **Settings → Secrets and variables → Actions** for this repository.
+2. Add repository secrets `OPENAI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. Use the ByteLearn Supabase project URL for `SUPABASE_URL`; never commit these values to the repository.
+3. Open **Actions → Generate and publish ByteLearn lessons → Run workflow**.
+4. Leave `force_regenerate` unchecked for the first run. Existing lesson files are preserved; missing curriculum lessons are generated.
+5. The workflow validates all 200 IDs and lesson structures, commits generated JSON to `content/drafts/`, then upserts all lessons into Supabase with `published=true`.
+
+The workflow is not executed automatically on every push. Generation and publishing only happen when manually dispatched. Automated validation is mandatory; human approval/review is not. Model output and source links can still be wrong, so the workflow should be monitored and individual lessons can be unpublished if an issue is reported.
+
 ## Background lesson updater (Phase 2)
 
 Recommended shape:
