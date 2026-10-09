@@ -102,7 +102,7 @@ const remaining = manifest.topics.filter(t => !fs.existsSync(path.join(outDir, `
 if (remaining.length === 0 && outDir === 'content/drafts') {
   for (const topic of manifest.topics) { topic.status = 'generated'; topic.batch = 1; }
   manifest.note = 'All 200 lesson files generated. Publication is automatic after deterministic validation; manual approval/review is not required.';
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n');
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 }
 console.log(`Generation pass finished. Existing/generated files: ${manifest.topics.length - remaining.length}/${manifest.topics.length}; missing: ${remaining.length}.`);
 if (remaining.length) process.exitCode = 1;
