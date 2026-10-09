@@ -9,7 +9,7 @@ A curriculum record with id, title, track, category, difficulty, objective, prer
 Return exactly one JSON object with this shape:
 {
   "id": "stable-kebab-case-id",
-  "category": "one of AI, Programming, Backend, System Design, Cloud, Engineering",
+  "category": "one of AI, Programming, Cloud, System Design",
   "title": "short, specific title",
   "subtitle": "practical promise in 1 sentence",
   "tag": "short uppercase feed label",
