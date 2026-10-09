@@ -1,0 +1,71 @@
+{
+  "id": "circuit-breakers",
+  "category": "System Design",
+  "title": "Stop cascading failures with a circuit breaker",
+  "subtitle": "Fail fast when a dependency is unhealthy",
+  "tag": "RELIABILITY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "distributed-systems",
+    "resilience"
+  ],
+  "learning_objective": "Describe the closed, open, and half-open states of a circuit breaker.",
+  "source_refs": [
+    {
+      "title": "Microsoft: Circuit Breaker pattern",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker",
+      "supports": "circuit breaker states and failure isolation"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE SLOW DEPENDENCY",
+      "body": "One service gets slow. Your workers pile up waiting for it, and unrelated requests start failing too."
+    },
+    {
+      "kind": "text",
+      "title": "Fail fast instead of piling up",
+      "body": "A circuit breaker tracks failures and temporarily stops calls to an unhealthy dependency, giving it time to recover."
+    },
+    {
+      "kind": "flow",
+      "title": "Three states",
+      "items": [
+        "CLOSED: calls flow",
+        "Too many failures ↓",
+        "OPEN: reject fast",
+        "After wait ↓",
+        "HALF-OPEN: test a call",
+        "Success → close; failure → open"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Not a retry policy",
+      "body": "A circuit breaker controls whether calls are attempted. Timeouts, bounded retries, and fallback behavior are separate decisions that work alongside it."
+    },
+    {
+      "kind": "quiz",
+      "question": "What is the half-open state for?",
+      "options": [
+        "Sending unlimited traffic again",
+        "Testing whether the dependency recovered",
+        "Deleting all recorded failures permanently"
+      ],
+      "answer": 1,
+      "explanation": "Half-open allows a limited probe or small amount of traffic to determine whether normal calls can resume."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Fail fast, isolate the dependency, and probe recovery instead of allowing queues to grow without bound."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
