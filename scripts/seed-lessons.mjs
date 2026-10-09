@@ -29,4 +29,4 @@ for (const file of files) {
   ok++;
   console.log(`Published ${lesson.id}`);
 }
-console.log(`Published/upserted ${ok} approved lesson(s).`);
+console.log(`Published/upserted ${ok} lesson(s) after automated validation.`);
