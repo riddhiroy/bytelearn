@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = process.argv[2] || 'content/approved';
+const root = process.argv[2] || 'content/drafts';
 const allowed = new Set(['title','text','flow','code','quiz','summary','callout']);
 const errors = [];
 const warnings = [];
@@ -45,8 +45,15 @@ for (const file of files) {
     }
     for (const [field, value] of Object.entries(s)) if (typeof value === 'string' && value.length > 650) warnings.push(`${file}: scene ${i} field ${field} exceeds 650 characters`);
   }
-  if (!Array.isArray(lesson.source_refs) || lesson.source_refs.length === 0) warnings.push(`${file}: no source_refs recorded`);
+  if (!Array.isArray(lesson.source_refs) || lesson.source_refs.length === 0 || lesson.source_refs.some(s => !nonEmpty(s.title) || !/^https:\/\//.test(s.url || '') || !nonEmpty(s.supports))) fail(file, 'source_refs must include a title, HTTPS URL, and supported claim');
   if (lesson.published === true) fail(file, 'draft/approved JSON must not set published=true; publication is controlled by seeder');
+}
+if (process.env.REQUIRE_200 === '1') {
+  const manifest = JSON.parse(fs.readFileSync('content/curriculum.json', 'utf8'));
+  const expected = new Set(manifest.topics.map(t => t.id));
+  for (const id of expected) if (!ids.has(id)) errors.push(`missing curriculum lesson: ${id}`);
+  for (const id of ids) if (!expected.has(id)) errors.push(`lesson not in curriculum manifest: ${id}`);
+  if (count !== 200) errors.push(`expected exactly 200 lesson files, found ${count}`);
 }
 console.log(`Checked ${count} lesson file(s) in ${root}`);
 for (const w of warnings) console.warn('WARN ' + w);
