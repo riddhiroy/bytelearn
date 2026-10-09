@@ -1,0 +1,72 @@
+{
+  "id": "latency-percentiles",
+  "category": "Cloud",
+  "title": "Why p99 latency matters",
+  "subtitle": "Averages can hide the users having a terrible time",
+  "tag": "PERFORMANCE",
+  "difficulty": "Intermediate",
+  "tags": [
+    "latency",
+    "observability"
+  ],
+  "learning_objective": "Interpret p50, p95, and p99 latency and understand why averages are insufficient.",
+  "source_refs": [
+    {
+      "title": "Google SRE: Monitoring Distributed Systems",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/",
+      "supports": "latency distributions and monitoring"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "AVERAGE LOOKS FINE",
+      "body": "Average latency is 120 ms, but some users wait several seconds. The average hides the tail."
+    },
+    {
+      "kind": "text",
+      "title": "Percentiles describe the distribution",
+      "body": "p50 is the median. p95 is the latency at or below which 95% of measured requests fall. p99 focuses on the slowest 1%."
+    },
+    {
+      "kind": "flow",
+      "title": "Read the tail",
+      "items": [
+        "p50: typical middle request",
+        "↓",
+        "p95: slower tail",
+        "↓",
+        "p99: extreme tail",
+        "↓",
+        "Compare by endpoint and time window"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Don't chase one number",
+      "body": "Percentiles depend on sample size, aggregation method, and time window. Pair them with request volume, errors, and traces to diagnose causes."
+    },
+    {
+      "kind": "quiz",
+      "question": "If p99 latency is 2 seconds, what does that indicate?",
+      "options": [
+        "Every request takes 2 seconds",
+        "About 99% of measured requests are at or below 2 seconds",
+        "Exactly 1% of requests failed"
+      ],
+      "answer": 1,
+      "explanation": "p99 is a latency percentile, not an error rate; about 99% of observations are at or below that value under the chosen calculation."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Monitor percentiles to expose slow-tail behavior, then segment and investigate the affected requests."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
