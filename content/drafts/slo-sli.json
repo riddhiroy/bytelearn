@@ -1,0 +1,70 @@
+{
+  "id": "slo-sli",
+  "category": "Cloud",
+  "title": "SLI vs SLO vs SLA",
+  "subtitle": "Turn reliability expectations into measurable targets",
+  "tag": "RELIABILITY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "observability",
+    "sre"
+  ],
+  "learning_objective": "Distinguish a service indicator, internal objective, and external agreement.",
+  "source_refs": [
+    {
+      "title": "Google SRE: Service Level Objectives",
+      "url": "https://sre.google/sre-book/service-level-objectives/",
+      "supports": "SLI/SLO concepts and setting objectives"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "IS THE SERVICE RELIABLE?",
+      "body": "“It feels slow” is hard to act on. A clear reliability target gives teams a measurable signal."
+    },
+    {
+      "kind": "text",
+      "title": "Three related terms",
+      "body": "An SLI is the measured indicator, such as successful request ratio. An SLO is the target for that indicator. An SLA is an agreement that may include consequences if targets are missed."
+    },
+    {
+      "kind": "flow",
+      "title": "From measurement to promise",
+      "items": [
+        "SLI: measure success rate",
+        "↓",
+        "SLO: target 99.9%",
+        "↓",
+        "SLA: contractual commitment, if defined"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Pick a user-facing signal",
+      "body": "Choose indicators users care about—availability, latency, or correctness—and define the measurement window and eligible requests."
+    },
+    {
+      "kind": "quiz",
+      "question": "Which term describes the target a team aims to meet?",
+      "options": [
+        "SLI",
+        "SLO",
+        "SLA in every context"
+      ],
+      "answer": 1,
+      "explanation": "The SLO sets a target for an indicator. An SLA is an external agreement and may include remedies."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Measure with an SLI, set a target with an SLO, and understand any external SLA separately."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
