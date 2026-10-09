@@ -1,0 +1,74 @@
+{
+  "id": "event-loop",
+  "category": "Programming",
+  "title": "Why JavaScript logs in a surprising order",
+  "subtitle": "The event loop explains callbacks, timers, and promises",
+  "tag": "DEBUGGING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "javascript",
+    "event-loop"
+  ],
+  "learning_objective": "Explain why synchronous code runs before queued callbacks and promise reactions.",
+  "source_refs": [
+    {
+      "title": "MDN: JavaScript execution model",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model",
+      "supports": "execution contexts, job queue, and event-loop concepts"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "GUESS THE OUTPUT",
+      "body": "A log runs, a timer is scheduled, and a Promise resolves. The order is not the order you wrote them in."
+    },
+    {
+      "kind": "text",
+      "title": "Finish the current job first",
+      "body": "JavaScript runs the current synchronous stack to completion. Promise reactions are queued as microtasks; timer callbacks run later as tasks when eligible."
+    },
+    {
+      "kind": "code",
+      "title": "Predict this",
+      "code": "console.log('A');\nsetTimeout(() => console.log('B'), 0);\nPromise.resolve().then(() => console.log('C'));\nconsole.log('D');"
+    },
+    {
+      "kind": "flow",
+      "title": "Execution order",
+      "items": [
+        "A: synchronous",
+        "D: synchronous",
+        "C: promise microtask",
+        "B: timer task"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Why it matters",
+      "body": "A zero-millisecond timer does not interrupt current code. Avoid using timers as a guarantee that another operation has finished."
+    },
+    {
+      "kind": "quiz",
+      "question": "What is the output order?",
+      "options": [
+        "A, B, C, D",
+        "A, D, C, B",
+        "C, A, D, B"
+      ],
+      "answer": 1,
+      "explanation": "Both synchronous logs run first. Promise reactions run before the timer callback in this example."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Synchronous stack first, then queued microtasks, then eligible tasks such as timers."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
