@@ -1,0 +1,68 @@
+{
+  "id": "observability",
+  "category": "Cloud",
+  "title": "Logs, metrics, and traces answer different questions",
+  "subtitle": "Choose the signal that helps diagnose an incident",
+  "tag": "OBSERVABILITY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "observability",
+    "debugging"
+  ],
+  "learning_objective": "Choose logs, metrics, or traces based on the debugging question.",
+  "source_refs": [
+    {
+      "title": "OpenTelemetry documentation",
+      "url": "https://opentelemetry.io/docs/concepts/signals/",
+      "supports": "logs, metrics, and traces as telemetry signals"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "LATENCY JUST SPIKED",
+      "body": "The dashboard says requests are slow. Which telemetry helps you find the cause?"
+    },
+    {
+      "kind": "text",
+      "title": "Three views of the system",
+      "body": "Metrics summarize behavior over time. Logs record individual events. Traces connect spans across the path of one request."
+    },
+    {
+      "kind": "flow",
+      "title": "Match signal to question",
+      "items": [
+        "How widespread? → Metrics",
+        "What happened? → Logs",
+        "Where did time go? → Traces"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Connect them with context",
+      "body": "Consistent service names, timestamps, trace IDs, and useful attributes help move from a metric spike to a specific request and its events."
+    },
+    {
+      "kind": "quiz",
+      "question": "Which signal is best for seeing time spent across several services in one request?",
+      "options": [
+        "A service-level CPU metric alone",
+        "A distributed trace",
+        "A single uncorrelated log line"
+      ],
+      "answer": 1,
+      "explanation": "A distributed trace links spans across services and shows where request time was spent."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Metrics show patterns, logs show events, and traces show request journeys. They work best together."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
