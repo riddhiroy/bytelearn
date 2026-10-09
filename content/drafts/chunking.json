@@ -1,0 +1,72 @@
+{
+  "id": "chunking",
+  "category": "AI",
+  "title": "Why chunk size changes RAG quality",
+  "subtitle": "Split documents without losing the context that matters",
+  "tag": "AI ENGINEERING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "rag",
+    "retrieval"
+  ],
+  "learning_objective": "Explain chunking trade-offs and identify when chunk boundaries damage retrieval.",
+  "source_refs": [
+    {
+      "title": "OpenAI Cookbook: Embeddings and search",
+      "url": "https://cookbook.openai.com/examples/embedding_wikipedia_articles_for_search",
+      "supports": "chunking and embedding content for search examples"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE RIGHT FACT, MISSING CONTEXT",
+      "body": "Your retrieval system finds a sentence with the answer—but the exception that changes its meaning was in the previous paragraph."
+    },
+    {
+      "kind": "text",
+      "title": "Chunks define what retrieval can see",
+      "body": "Very small chunks can lose context. Very large chunks can dilute relevance and consume more context-window space. The best size depends on the documents and questions."
+    },
+    {
+      "kind": "flow",
+      "title": "Tune the split",
+      "items": [
+        "Inspect document structure",
+        "↓",
+        "Split at meaningful boundaries",
+        "↓",
+        "Add overlap only if useful",
+        "↓",
+        "Evaluate with real questions"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Measure, don't guess",
+      "body": "Create a small set of representative questions. Compare retrieval relevance and answer quality across chunk sizes, overlap, and metadata filters."
+    },
+    {
+      "kind": "quiz",
+      "question": "What is the main risk of chunks that are too small?",
+      "options": [
+        "They can lose context needed to interpret a fact",
+        "They always cost more storage than large chunks",
+        "They guarantee perfect retrieval"
+      ],
+      "answer": 0,
+      "explanation": "A chunk may contain a fact without the surrounding definition, condition, or exception needed to use it correctly."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Chunk around meaning and evaluate retrieval against realistic questions, not just chunk count."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
