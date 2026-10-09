@@ -46,7 +46,16 @@ function validate(lesson, topic) {
 
 async function generate(topic) {
   const target = path.join(outDir, `${topic.id}.json`);
-  if (fs.existsSync(target) && !force) return { id: topic.id, status: 'kept-existing' };
+  if (fs.existsSync(target) && !force) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(target, 'utf8'));
+      const existingErrors = validate(existing, topic);
+      if (existingErrors.length === 0) return { id: topic.id, status: 'kept-existing' };
+      console.log(`Regenerating ${topic.id}: existing file failed checks: ${existingErrors.join('; ')}`);
+    } catch (error) {
+      console.log(`Regenerating ${topic.id}: existing file is not valid JSON (${error.message})`);
+    }
+  }
   const user = {
     curriculum_topic: topic,
     output_contract: {
