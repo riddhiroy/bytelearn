@@ -1,0 +1,72 @@
+{
+  "id": "cache-stampede",
+  "category": "System Design",
+  "title": "Prevent a cache stampede",
+  "subtitle": "Avoid sending every cache miss to your database",
+  "tag": "PERFORMANCE",
+  "difficulty": "Advanced",
+  "tags": [
+    "caching",
+    "reliability"
+  ],
+  "learning_objective": "Explain cache stampedes and compare single-flight, TTL jitter, and stale-while-revalidate.",
+  "source_refs": [
+    {
+      "title": "AWS Builders' Library: Caching challenges",
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "supports": "cache behavior and load-management considerations"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE CACHE EXPIRES",
+      "body": "A popular key expires. Thousands of requests miss at once and hammer the database."
+    },
+    {
+      "kind": "text",
+      "title": "One miss becomes a thundering herd",
+      "body": "When many callers rebuild the same expired value simultaneously, the cache can create a burst of duplicate expensive work."
+    },
+    {
+      "kind": "flow",
+      "title": "Coordinate refreshes",
+      "items": [
+        "Many requests miss",
+        "↓",
+        "One request refreshes key",
+        "↓",
+        "Others wait or use stale value",
+        "↓",
+        "Cache repopulated"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Choose a defense",
+      "body": "Single-flight coalesces concurrent refreshes; TTL jitter spreads expirations; stale-while-revalidate can serve an old value while refreshing when the product permits it."
+    },
+    {
+      "kind": "quiz",
+      "question": "Which technique helps prevent many callers from rebuilding the same key at once?",
+      "options": [
+        "Single-flight request coalescing",
+        "Expiring every key at the same instant",
+        "Retrying all misses immediately"
+      ],
+      "answer": 0,
+      "explanation": "Single-flight coordinates concurrent work so one refresh happens for a key while other callers share the result or wait."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "A cache needs an expiry strategy and a plan for concurrent misses—not just a TTL."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
