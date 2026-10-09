@@ -6,18 +6,13 @@ The curriculum manifest defines 200 topic IDs across six tracks. It is a plan, n
 
 ## Repository workflow
 
-1. Select a batch of curriculum topics and attach curated source URLs.
-2. Generate one lesson JSON per topic using `prompts/generate-lesson.md`.
-3. Save outputs under `content/drafts/`.
-4. Run `node scripts/validate-lessons.mjs content/drafts`.
-5. Run the independent review prompt in `prompts/review-lesson.md`; resolve all medium/high/critical findings.
-6. Manually verify sources and execute code samples where feasible.
-7. Copy approved JSON to `content/approved/`, recording `review.status: "PASS"` or `approved: true`.
-8. Run `node scripts/validate-lessons.mjs content/approved`.
-9. Run the seeder only from a trusted environment with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set.
-10. Verify published counts and render lessons in the app before release.
+1. Generate one lesson JSON per curriculum topic using `prompts/generate-lesson.md` and curated source URLs.
+2. Save generated lesson files under `content/drafts/`.
+3. Run `node scripts/validate-lessons.mjs content/drafts`; fix deterministic schema, quiz, duplicate-ID, and length errors automatically or by regenerating the affected lesson.
+4. Run the seeder from a trusted environment with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set. No manual approval or editorial-review flag is required.
+5. Verify published counts and render lessons in the app before release.
 
-The seeder uses an upsert by lesson ID, so reruns reconcile the same record instead of duplicating it. It refuses records that have not been marked approved. Never put a service-role key in the React Native app or Git history.
+The seeder uses an upsert by lesson ID, so reruns reconcile the same record instead of duplicating it. Publishing is automatic after deterministic structural checks; manual approval/review flags are not required. This does not guarantee every technical claim is correct, so retain automated checks and monitor learner reports. Never put a service-role key in the React Native app or Git history.
 
 ## Suggested batch schedule for 200 lessons
 
@@ -38,9 +33,9 @@ Recommended shape:
 - Generate drafts using a server-side AI provider key stored as a secret.
 - Run deterministic schema/duplicate checks and an independent review pass.
 - Save drafts and job logs with statuses such as queued, generated, needs_review, approved, rejected, published, failed.
-- Publish only when required checks and approval policy pass.
+- Publish automatically after deterministic schema, duplicate, quiz-answer, source-presence, and length checks pass; do not require a human approval flag.
 - Use unique topic/lesson IDs, idempotent upserts, rate limits, budget caps, retry limits, and alerts.
-- Do not run model calls in the mobile/web client. Do not blindly auto-publish AI-generated content.
+- Do not run model calls in the mobile/web client. Auto-publishing is enabled by product choice, so use automated validation, source-link checks, rollout limits, and a fast unpublish path.
 
 For the first release, a manual batch workflow is simpler and easier to audit. Add the scheduled updater after the batch pipeline is reliable.
 
