@@ -1,0 +1,75 @@
+{
+  "id": "references-vs-values",
+  "category": "Programming",
+  "title": "Why changing one object changes another",
+  "subtitle": "References explain surprising mutation bugs",
+  "tag": "CODE BASICS",
+  "difficulty": "Beginner",
+  "tags": [
+    "javascript",
+    "objects",
+    "debugging"
+  ],
+  "learning_objective": "Predict how object references behave when assigned to another variable.",
+  "source_refs": [
+    {
+      "title": "MDN: Working with objects",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects",
+      "supports": "JavaScript objects and references"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "TWO VARIABLES, ONE OBJECT",
+      "body": "You copy a variable, edit the copy, and suddenly the original data changes too."
+    },
+    {
+      "kind": "text",
+      "title": "Objects are referenced",
+      "body": "Assigning an object to another variable copies the reference, not a second independent object. Both variables can point to the same object."
+    },
+    {
+      "kind": "code",
+      "title": "The surprise",
+      "code": "const a = { count: 1 };\nconst b = a;\nb.count = 2;\nconsole.log(a.count); // 2"
+    },
+    {
+      "kind": "flow",
+      "title": "What the variables hold",
+      "items": [
+        "a ─┐",
+        "   ├──> { count: 2 }",
+        "b ─┘",
+        "One object, two references"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Safer update",
+      "body": "For a shallow copy of a simple object, use { ...a }. Nested objects are still shared unless you copy them too."
+    },
+    {
+      "kind": "quiz",
+      "question": "After `const b = a`, where do a and b point?",
+      "options": [
+        "Two independent objects",
+        "The same object",
+        "A deep copy of a"
+      ],
+      "answer": 1,
+      "explanation": "Assignment copies the reference. Mutating the shared object is visible through either variable."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Ask whether you copied the data or only copied a reference to it."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
