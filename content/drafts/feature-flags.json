@@ -1,0 +1,74 @@
+{
+  "id": "feature-flags",
+  "category": "Programming",
+  "title": "Feature flags are not just on/off switches",
+  "subtitle": "Release safely without redeploying every change",
+  "tag": "DELIVERY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "deployment",
+    "reliability"
+  ],
+  "learning_objective": "Explain how feature flags support gradual rollout and identify risks from stale flags.",
+  "source_refs": [
+    {
+      "title": "Martin Fowler: Feature Toggles",
+      "url": "https://martinfowler.com/articles/feature-toggles.html",
+      "supports": "feature toggle categories and trade-offs"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "SHIP WITHOUT EXPOSING EVERYONE",
+      "body": "A new checkout flow is deployed, but you want to enable it for 1% of users before a wider rollout."
+    },
+    {
+      "kind": "text",
+      "title": "Separate deploy from release",
+      "body": "A feature flag lets a running system choose between behaviors based on configuration or user attributes. It can support gradual exposure and quick disablement."
+    },
+    {
+      "kind": "flow",
+      "title": "A cautious rollout",
+      "items": [
+        "Deploy code disabled",
+        "↓",
+        "Enable for internal users",
+        "↓",
+        "Expand to a small cohort",
+        "↓",
+        "Monitor metrics",
+        "↓",
+        "Expand or turn off"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Flags create maintenance debt",
+      "body": "Remove temporary flags after rollout, define safe defaults, and ensure authorization never depends only on a client-controlled feature flag."
+    },
+    {
+      "kind": "quiz",
+      "question": "What is a major benefit of a release feature flag?",
+      "options": [
+        "It eliminates the need for testing",
+        "It separates deployment from exposure to users",
+        "It guarantees a rollback is never needed"
+      ],
+      "answer": 1,
+      "explanation": "The code can be deployed while exposure is controlled separately, enabling staged rollout and fast disablement."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Use flags to manage exposure deliberately—and assign owners and cleanup dates."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
