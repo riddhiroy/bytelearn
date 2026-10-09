@@ -1,0 +1,79 @@
+{
+  "id": "structured-outputs",
+  "category": "AI",
+  "title": "Make AI output usable with a schema",
+  "subtitle": "Turn free-form responses into validated data",
+  "tag": "AI ENGINEERING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "llm",
+    "structured-output"
+  ],
+  "learning_objective": "Explain how schema-constrained output and application validation work together.",
+  "source_refs": [
+    {
+      "title": "OpenAI: Structured Outputs",
+      "url": "https://platform.openai.com/docs/guides/structured-outputs",
+      "supports": "constraining model output to a JSON schema"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE PARSER BROKE",
+      "body": "Your app expects JSON, but the model adds an introduction, omits a field, and changes an enum."
+    },
+    {
+      "kind": "text",
+      "title": "Constrain the shape",
+      "body": "Structured-output features can constrain responses to a schema. The application still needs to handle refusals, incomplete responses, business rules, and downstream failures."
+    },
+    {
+      "kind": "flow",
+      "title": "Reliable pipeline",
+      "items": [
+        "Define schema",
+        "↓",
+        "Generate constrained output",
+        "↓",
+        "Parse + validate",
+        "↓",
+        "Apply business rules",
+        "↓",
+        "Accept or retry safely"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "Validate the contract",
+      "code": "if (!lesson.id || !Array.isArray(lesson.scenes)) {\n  throw new Error('Invalid lesson payload');\n}"
+    },
+    {
+      "kind": "callout",
+      "title": "Schema isn't fact-checking",
+      "body": "Valid JSON can contain false information. Structural validation and factual review solve different problems."
+    },
+    {
+      "kind": "quiz",
+      "question": "What does schema-constrained output not guarantee by itself?",
+      "options": [
+        "A predictable output structure",
+        "Factual correctness of every claim",
+        "A defined set of fields"
+      ],
+      "answer": 1,
+      "explanation": "A schema can constrain structure and types, but it cannot prove that the content is factually true."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Constrain structure, validate business rules, and independently check factual quality."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
