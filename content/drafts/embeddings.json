@@ -1,0 +1,74 @@
+{
+  "id": "embeddings",
+  "category": "AI",
+  "title": "What an embedding actually represents",
+  "subtitle": "Turn meaning-related content into vectors for retrieval",
+  "tag": "AI ENGINEERING",
+  "difficulty": "Intermediate",
+  "tags": [
+    "llm",
+    "vectors",
+    "search"
+  ],
+  "learning_objective": "Explain embeddings as numerical representations and their role in similarity search.",
+  "source_refs": [
+    {
+      "title": "OpenAI: Embeddings guide",
+      "url": "https://platform.openai.com/docs/guides/embeddings",
+      "supports": "embeddings as vector representations used for relatedness and search"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "SEARCH BY MEANING",
+      "body": "A user asks “How do I stop a service from crashing?” but the document says “prevent cascading failures.” Keyword search may miss the connection."
+    },
+    {
+      "kind": "text",
+      "title": "Represent content as vectors",
+      "body": "An embedding model maps text into a list of numbers. Similarity measures can help retrieve items whose representations are close, but vectors do not guarantee perfect understanding."
+    },
+    {
+      "kind": "flow",
+      "title": "Semantic retrieval",
+      "items": [
+        "Document chunks",
+        "↓",
+        "Embedding model",
+        "↓",
+        "Store vectors",
+        "Query → vector",
+        "↓",
+        "Nearest candidates"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Similarity is not truth",
+      "body": "Retrieval quality depends on the model, chunking, distance metric, filters, and evaluation. A close vector match can still be irrelevant."
+    },
+    {
+      "kind": "quiz",
+      "question": "What is a common use for text embeddings?",
+      "options": [
+        "Represent text for semantic similarity search",
+        "Encrypt a PDF automatically",
+        "Guarantee every retrieved result is correct"
+      ],
+      "answer": 0,
+      "explanation": "Embeddings provide numerical representations that can be compared to retrieve semantically related content."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Embeddings help find related content; retrieval still needs evaluation and appropriate ranking."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
