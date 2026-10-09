@@ -96,7 +96,12 @@ async function generate(topic) {
   throw new Error(`Could not generate ${topic.id}: ${lastError?.message}`);
 }
 
-const todo = manifest.topics.filter(t => force || !fs.existsSync(path.join(outDir, `${t.id}.json`))).slice(0, limit);
+const todo = manifest.topics.filter(topic => {
+  const target = path.join(outDir, `${topic.id}.json`);
+  if (force || !fs.existsSync(target)) return true;
+  try { return validate(JSON.parse(fs.readFileSync(target, 'utf8')), topic).length > 0; }
+  catch { return true; }
+}).slice(0, limit);
 console.log(`Curriculum: ${manifest.topics.length} topics; generating ${todo.length}; model=${model}; force=${force}`);
 let completed = 0;
 for (let i = 0; i < todo.length; i += 3) {
