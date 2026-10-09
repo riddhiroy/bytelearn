@@ -43,8 +43,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain async/await and promise timing and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "closures",
@@ -65,8 +65,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain the javascript event loop and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "race-conditions",
@@ -120,8 +120,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain references vs values and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "immutability",
@@ -153,8 +153,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain writing effective unit tests and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "integration-testing",
@@ -219,8 +219,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain reading big o complexity and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "binary-search",
@@ -329,8 +329,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain backpressure in streaming systems and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "thread-pools",
@@ -395,8 +395,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain using feature flags safely and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "git-rebase",
@@ -505,8 +505,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain how database indexes work and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "transactions",
@@ -516,8 +516,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain database transactions and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "isolation-levels",
@@ -549,8 +549,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain offset vs cursor pagination and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "rate-limiting",
@@ -560,8 +560,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain rate limiting apis and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "authentication-authorization",
@@ -604,8 +604,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain idempotency in rest apis and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "webhooks",
@@ -1022,8 +1022,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain circuit breakers and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "bulkheads",
@@ -1154,8 +1154,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain preventing cache stampedes and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "consistent-reads",
@@ -1253,8 +1253,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain slis, slos, and slas and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "capacity-planning",
@@ -1462,8 +1462,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain logs, metrics, and traces and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "distributed-tracing",
@@ -1572,8 +1572,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain how dns resolution works and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "tls",
@@ -1682,8 +1682,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain what embeddings represent and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "vector-search",
@@ -1704,8 +1704,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain chunking documents for rag and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "reranking",
@@ -1726,8 +1726,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain prompt injection risks and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "structured-outputs",
@@ -1737,8 +1737,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain reliable structured outputs and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "tool-calling",
@@ -1792,8 +1792,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain evaluating llm responses and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "rag-evaluation",
@@ -2034,8 +2034,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain enforcing authorization on the server and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "dependency-vulnerabilities",
@@ -2111,8 +2111,8 @@
       "difficulty": "Intermediate",
       "objective": "Explain understanding p95 and p99 latency and help a working software engineer apply it in a realistic engineering scenario.",
       "sourcePolicy": "Use official documentation or authoritative technical references; record exact URLs during drafting.",
-      "status": "planned",
-      "batch": null
+      "status": "draft_created",
+      "batch": 1
     },
     {
       "id": "throughput-latency",
