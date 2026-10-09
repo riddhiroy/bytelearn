@@ -156,7 +156,13 @@ export default function App(){
       try{
         const sessionResult=await supabase.auth.getSession();
         if(sessionResult.error)throw sessionResult.error;
-        const session=sessionResult.data.session;
+        let session=sessionResult.data.session;
+
+        // Migrate older app sessions that were created anonymously to the real login screen.
+        if(session?.user?.is_anonymous){
+          await supabase.auth.signOut();
+          session=null;
+        }
 
         // Visitors must sign in or create an account; do not silently create anonymous users.
         if(!session?.user||cancelled)return;
