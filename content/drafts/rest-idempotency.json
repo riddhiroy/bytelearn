@@ -1,0 +1,80 @@
+{
+  "id": "rest-idempotency",
+  "category": "System Design",
+  "title": "How to make retries safe with idempotency",
+  "subtitle": "Prevent duplicate side effects after timeouts",
+  "tag": "RELIABILITY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "api",
+    "payments",
+    "retries"
+  ],
+  "learning_objective": "Explain idempotent operations and the role of idempotency keys in retryable APIs.",
+  "source_refs": [
+    {
+      "title": "Stripe: Idempotent requests",
+      "url": "https://docs.stripe.com/api/idempotent_requests",
+      "supports": "idempotency keys for safely retrying requests"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "DID THE PAYMENT WORK?",
+      "body": "The server charged the card, but the response timed out. Retrying blindly could charge again."
+    },
+    {
+      "kind": "text",
+      "title": "A timeout is ambiguous",
+      "body": "The client may not know whether the server completed the operation. Idempotency makes repeated attempts for the same logical operation safe."
+    },
+    {
+      "kind": "flow",
+      "title": "Same key, same operation",
+      "items": [
+        "Send payment + key K",
+        "↓",
+        "Server records result",
+        "↓",
+        "Response times out",
+        "↓",
+        "Retry with key K",
+        "↓",
+        "Return stored result"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "Request identity",
+      "code": "POST /payments\nIdempotency-Key: order-842-payment"
+    },
+    {
+      "kind": "callout",
+      "title": "Design the contract",
+      "body": "The server must store and coordinate key usage correctly, define retention, and reject unsafe reuse with different parameters. A header alone does not guarantee idempotency."
+    },
+    {
+      "kind": "quiz",
+      "question": "What makes a retry safe in this pattern?",
+      "options": [
+        "Using a new random key on every retry",
+        "Reusing the same key for the same logical operation",
+        "Assuming timeouts mean the server did nothing"
+      ],
+      "answer": 1,
+      "explanation": "Reusing the same key lets the server recognize the retry and return the original operation's outcome rather than repeat the side effect."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Treat timeouts as unknown outcomes. Design idempotency at the server, not just in the client."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
