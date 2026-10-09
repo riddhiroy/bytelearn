@@ -1,0 +1,66 @@
+name: Generate and publish ByteLearn lessons
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_regenerate:
+        description: Regenerate existing lesson files too
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bytelearn-curriculum-generation
+  cancel-in-progress: false
+
+jobs:
+  generate-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: gpt-5-mini
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate all missing lessons
+        run: |
+          if [ "${{ inputs.force_regenerate }}" = "true" ]; then
+            node scripts/generate-curriculum.mjs --force
+          else
+            node scripts/generate-curriculum.mjs
+          fi
+
+      - name: Validate the complete 200-lesson catalog
+        env:
+          REQUIRE_200: "1"
+        run: node scripts/validate-lessons.mjs content/drafts
+
+      - name: Commit generated lessons
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/drafts content/curriculum.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate ByteLearn 200-lesson curriculum"
+            git push
+          else
+            echo "No generated content changes to commit."
+          fi
+
+      - name: Publish lessons to Supabase
+        run: node scripts/seed-lessons.mjs content/drafts
