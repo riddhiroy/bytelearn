@@ -1,0 +1,78 @@
+{
+  "id": "transactions",
+  "category": "Programming",
+  "title": "What a database transaction protects",
+  "subtitle": "Keep related changes from half-succeeding",
+  "tag": "DATABASES",
+  "difficulty": "Intermediate",
+  "tags": [
+    "database",
+    "transactions"
+  ],
+  "learning_objective": "Explain why related writes should be grouped in a transaction.",
+  "source_refs": [
+    {
+      "title": "PostgreSQL: Transactions",
+      "url": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+      "supports": "transaction commit and rollback behavior"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE HALF-TRANSFER",
+      "body": "Money leaves account A, then a second update fails before account B receives it."
+    },
+    {
+      "kind": "text",
+      "title": "Group one logical operation",
+      "body": "A transaction lets multiple database statements succeed together or roll back together, subject to the database's transaction semantics."
+    },
+    {
+      "kind": "flow",
+      "title": "Transfer safely",
+      "items": [
+        "BEGIN",
+        "↓",
+        "Debit account A",
+        "↓",
+        "Credit account B",
+        "↓",
+        "COMMIT",
+        "On failure → ROLLBACK"
+      ]
+    },
+    {
+      "kind": "code",
+      "title": "Transaction shape",
+      "code": "BEGIN;\nUPDATE accounts SET balance = balance - 50 WHERE id = 'A';\nUPDATE accounts SET balance = balance + 50 WHERE id = 'B';\nCOMMIT;"
+    },
+    {
+      "kind": "callout",
+      "title": "Important boundary",
+      "body": "A database transaction cannot automatically roll back an external email, payment provider call, or message already sent. Those need separate reliability patterns."
+    },
+    {
+      "kind": "quiz",
+      "question": "If the second database statement fails before commit, what should the transaction do?",
+      "options": [
+        "Commit the first statement anyway",
+        "Roll back the transaction",
+        "Retry forever inside the database"
+      ],
+      "answer": 1,
+      "explanation": "The application should roll back the transaction so the logical operation does not leave only the first change committed."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Use a transaction for related database changes that must preserve one consistent outcome."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
