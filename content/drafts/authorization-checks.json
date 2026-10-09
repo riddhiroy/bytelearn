@@ -1,0 +1,75 @@
+{
+  "id": "authorization-checks",
+  "category": "Programming",
+  "title": "Why hiding an admin button is not security",
+  "subtitle": "Authorization must be enforced where data is accessed",
+  "tag": "SECURITY",
+  "difficulty": "Intermediate",
+  "tags": [
+    "security",
+    "authorization",
+    "api"
+  ],
+  "learning_objective": "Distinguish user-interface visibility from server-side authorization.",
+  "source_refs": [
+    {
+      "title": "OWASP Authorization Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+      "supports": "enforce authorization on every request and deny by default"
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "title",
+      "title": "THE HIDDEN ADMIN BUTTON",
+      "body": "A regular user cannot see the delete button. They send the API request directly anyway—and the record disappears."
+    },
+    {
+      "kind": "text",
+      "title": "The client is not a security boundary",
+      "body": "Users can modify requests, scripts, and local UI state. The backend must verify that the authenticated user is allowed to perform each action on the requested resource."
+    },
+    {
+      "kind": "flow",
+      "title": "Enforce access at the boundary",
+      "items": [
+        "Request + identity",
+        "↓",
+        "Authenticate",
+        "↓",
+        "Authorize action + resource",
+        "↙          ↘",
+        "Allowed      Denied",
+        "↓                 ↓",
+        "Perform action    No data change"
+      ]
+    },
+    {
+      "kind": "callout",
+      "title": "Default to deny",
+      "body": "Check permissions on every sensitive request, including object ownership. Hiding controls is a usability feature, not authorization."
+    },
+    {
+      "kind": "quiz",
+      "question": "Where must permission to delete a record be enforced?",
+      "options": [
+        "Only in the UI",
+        "At the trusted server/data-access boundary",
+        "In the button's CSS"
+      ],
+      "answer": 1,
+      "explanation": "A caller can bypass the UI. The server or database policy must independently enforce access."
+    },
+    {
+      "kind": "summary",
+      "title": "Remember this",
+      "body": "Treat every client request as untrusted and authorize the action against the specific resource."
+    }
+  ],
+  "review": {
+    "status": "draft",
+    "notes": [
+      "Generated for Batch 1; requires independent source and editorial review before approval."
+    ]
+  }
+}
