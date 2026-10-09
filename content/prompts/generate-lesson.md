@@ -25,8 +25,7 @@ Return exactly one JSON object with this shape:
     {"kind":"callout","title":"...","body":"..."},
     {"kind":"summary","title":"...","body":"..."},
     {"kind":"quiz","question":"...","options":["...","...","..."],"answer":0,"explanation":"..."}
-  ],
-  "source_refs": [{"title":"...","url":"https://...","supports":"..."}]
+  ]
 }
 
 Use 5–8 scenes. Only use the existing renderer-supported kinds: title, text, flow, code, quiz, summary, callout. Do not add unsupported scene kinds. Keep body text concise enough for a mobile screen. Use code only when it materially helps. A flow scene should contain short, sequential items and may use "↓" as a connector. A quiz must have exactly one defensible answer, answer must be a zero-based integer, and explanation must explain the reasoning.
